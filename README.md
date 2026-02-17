@@ -1,6 +1,14 @@
 # lootbox-iframe-widget-vue
 
-This template should help get you started developing with Vue 3 in Vite.
+Незалежний Vue 3 iframe-віджет лутбокса з модульною системою тем, A/B тестуванням та аналітикою.
+
+## Основні можливості
+
+- **Мультипроектність** — підтримка проектів Rocket, King, Thor з окремими темами
+- **A/B тестування** — автоматичний розподіл користувачів між варіантами тем
+- **Аналітика** — інтеграція з FullStory та Google Analytics 4
+- **PostMessage API** — двостороння комунікація з батьківським сайтом
+- **Оптимізована анімація** — requestAnimationFrame без GSAP
 
 ## Recommended IDE Setup
 

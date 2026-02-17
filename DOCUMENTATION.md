@@ -17,28 +17,39 @@
 Projects/lootbox-iframe-widget-vue/
 ├── public/                  # Статичні файли (копіюються в dist)
 │   └── js/
-│       └── bootstrap.js     # Ранній рантайм
+│       └── bootstrap.js     # Ранній рантайм + A/B тестування
 ├── src/
+│   ├── ab/                   # A/B тестування
+│   │   └── config.ts         # Конфігурація A/B тестів
 │   ├── composables/          # Перевикористовувана логіка
-│   │   ├── useWheelAnimation.ts
-│   │   └── usePostMessageBus.ts
+│   │   ├── useWheelAnimation.ts    # Анімація колеса
+│   │   ├── usePostMessageBus.ts    # PostMessage комунікація
+│   │   ├── useAnalytics.ts         # Аналітика (FullStory, GA4)
+│   │   ├── useImagePreloader.ts    # Попереднє завантаження зображень
+│   │   └── useWinAnimationPreloader.ts # Прелоад win-анімації
 │   ├── types/               # TypeScript типи
 │   ├── utils/               # Утиліти (парсинг секторів)
 │   ├── themes/              # Теми дизайну
-│   │   ├── default/
+│   │   ├── RocketWheelLite/ # Тема Rocket Lite (дефолт для rocket)
 │   │   │   ├── config.ts
 │   │   │   ├── theme.scss
 │   │   │   ├── images/
 │   │   │   └── styles/
-│   │   │       ├── _animations.scss
-│   │   │       └── _tokens.scss
-│   │   └── crown/
+│   │   ├── RocketWheelPro/  # Тема Rocket Pro
+│   │   │   ├── config.ts
+│   │   │   ├── theme.scss
+│   │   │   ├── images/
+│   │   │   └── styles/
+│   │   ├── KingWheel/       # Тема King (дефолт для king)
+│   │   │   ├── config.ts
+│   │   │   ├── theme.scss
+│   │   │   ├── images/
+│   │   │   └── styles/
+│   │   └── ThorWheel/       # Тема Thor (дефолт для thor)
 │   │       ├── config.ts
 │   │       ├── theme.scss
 │   │       ├── images/
 │   │       └── styles/
-│   │           ├── _animations.scss
-│   │           └── _tokens.scss
 │   └── App.vue              # Головний компонент
 ├── vite/                    # Конфігурація збірки
 │   └── plugins/
@@ -47,15 +58,19 @@ Projects/lootbox-iframe-widget-vue/
 │   ├── js/
 │   │   └── bootstrap.js     # Копія з public/js/
 │   └── themes/              # Генеровані файли тем (з src/themes/)
-│       ├── themes-config.js # Конфігурація всіх тем
-│       ├── default/
-│       │   ├── theme.css    # Компільований CSS (з src/themes/default/theme.scss)
-│       │   └── images/      # Копія зображень (з src/themes/default/images/)
-│       │       ├── bg.webp, logo.svg, preloader.svg, wheelpointer.webp, ...
-│       └── crown/
-│           ├── theme.css    # Компільований CSS (з src/themes/crown/theme.scss)
-│           └── images/      # Копія зображень (з src/themes/crown/images/)
-│               ├── bg.webp, logo.svg, preloader.svg, wheelpointer.webp, ...
+│       ├── themes-config.js # Конфігурація всіх тем + A/B тести
+│       ├── RocketWheelLite/
+│       │   ├── theme.css
+│       │   └── images/
+│       ├── RocketWheelPro/
+│       │   ├── theme.css
+│       │   └── images/
+│       ├── KingWheel/
+│       │   ├── theme.css
+│       │   └── images/
+│       └── ThorWheel/
+│           ├── theme.css
+│           └── images/
 └── test-lootbox.html        # Тестовий прототип
 ```
 
@@ -90,12 +105,12 @@ Projects/lootbox-iframe-widget-vue/
 
 ### Мультипроектна архітектура
 
-Віджет підтримує роботу з **кількома проектами** (Rocket, King, WinSpirits тощо). Кожен проект може мати свої теми з різним дизайном.
+Віджет підтримує роботу з **кількома проектами** (Rocket, King, Thor тощо). Кожен проект може мати свої теми з різним дизайном.
 
 **Ключові концепції:**
 
-- **Проект (`project`)** — логічна група тем (наприклад, `rocket`, `king`)
-- **Тема** — конкретний дизайн колеса (наприклад, `RocketWheelLite`, `KingWheel`)
+- **Проект (`project`)** — логічна група тем (наприклад, `rocket`, `king`, `thor`)
+- **Тема** — конкретний дизайн колеса (наприклад, `RocketWheelLite`, `KingWheel`, `ThorWheel`)
 - **Дефолтна тема проекту** — тема, яка застосовується якщо не вказано конкретну тему
 
 **Приклад структури:**
@@ -107,6 +122,9 @@ Projects/lootbox-iframe-widget-vue/
 
 Проект King:
 └── KingWheel (дефолт для King)
+
+Проект Thor:
+└── ThorWheel (дефолт для Thor)
 ```
 
 ### Розміщення тем у src/, а не в public/
@@ -136,7 +154,14 @@ src/themes/
 │   └── styles/
 │       ├── _animations.scss
 │       └── _tokens.scss
-└── KingWheel/
+├── KingWheel/
+│   ├── config.ts
+│   ├── theme.scss
+│   ├── images/
+│   └── styles/
+│       ├── _animations.scss
+│       └── _tokens.scss
+└── ThorWheel/
     ├── config.ts
     ├── theme.scss
     ├── images/
@@ -241,7 +266,7 @@ export const config: ThemeConfig = {
   timings: {
     spinDuration: 8000,
     timeToPopup: 9000,
-    winAnimationOffset: 0,
+    winAnimationOffset: 2000, // На скільки мс раніше показувати win-анімацію
   },
   logic: {
     numberOfSpins: 1,
@@ -341,6 +366,7 @@ export const config: ThemeConfig = {
 <link rel="preload" as="image" href="themes/RocketWheelLite/images/preloader.svg" />
 <link rel="preload" as="image" href="themes/RocketWheelPro/images/preloader.svg" />
 <link rel="preload" as="image" href="themes/KingWheel/images/preloader.svg" />
+<link rel="preload" as="image" href="themes/ThorWheel/images/preloader.svg" />
 <link rel="preload" as="image" href="themes/YourThemeName/images/preloader.svg" />
 <!-- ← Додати -->
 ```
@@ -351,6 +377,7 @@ export const config: ThemeConfig = {
 var projectDefaults = {
   rocket: 'RocketWheelLite',
   king: 'KingWheel',
+  thor: 'ThorWheel',
   yourproject: 'YourThemeName', // ← Додати новий проект
 }
 ```
@@ -366,6 +393,7 @@ var projectDefaults = {
   <option value="">— Без проекту —</option>
   <option value="rocket">Rocket</option>
   <option value="king">King</option>
+  <option value="thor">Thor</option>
   <option value="yourproject">YourProject</option>
   <!-- ← Додати -->
 </select>
@@ -379,6 +407,7 @@ var projectDefaults = {
   <option value="RocketWheelLite" data-project="rocket">RocketWheelLite (Rocket)</option>
   <option value="RocketWheelPro" data-project="rocket">RocketWheelPro (Rocket)</option>
   <option value="KingWheel" data-project="king">KingWheel (King)</option>
+  <option value="ThorWheel" data-project="thor">ThorWheel (Thor)</option>
   <option value="YourThemeName" data-project="yourproject">YourThemeName (YourProject)</option>
   <!-- ← Додати -->
 </select>
@@ -495,6 +524,190 @@ var projectDefaults = {
 
 # Приклад з FullStory інтеграцією
 ?project=alpa&fs_org=FWWXX&sectors=500%20USD;1,000%20USD&sectors_type=Bonus%20Prize;Bonus%20Prize
+```
+
+## 📋 A/B тестування
+
+Віджет підтримує A/B тестування для порівняння різних тем в межах одного проекту. Система автоматично призначає користувачам варіант теми та відстежує конверсії через аналітику.
+
+### Принцип роботи
+
+1. **Стабільна ідентифікація користувача**: При першому завантаженні генерується унікальний `ab_user_id` (UUID) і зберігається в `localStorage`
+2. **Детерміністичне хешування**: Комбінація `userId + testId` хешується алгоритмом FNV-1a для отримання стабільного числа
+3. **Розподіл за вагою**: Хеш використовується для вибору варіанту згідно з налаштованими вагами (наприклад, 50/50)
+4. **Прозорість**: Результат A/B тесту доступний в `window.currentTheme.abTest` та автоматично додається до всіх аналітичних подій
+
+### Конфігурація A/B тестів
+
+Конфігурація знаходиться в `src/ab/config.ts`:
+
+```typescript
+// src/ab/config.ts
+export interface ABVariant {
+  id: string      // Ідентифікатор варіанту (A, B, C...)
+  theme: string   // Назва теми для цього варіанту
+  weight: number  // Вага (відсоток користувачів)
+}
+
+export interface ABTest {
+  testId: string           // Унікальний ID тесту
+  variants: ABVariant[]    // Масив варіантів
+}
+
+export type ABTestsConfig = Record<string, ABTest>
+
+export const abTests: ABTestsConfig = {
+  rocket: {
+    testId: 'rocket_theme_v1',
+    variants: [
+      { id: 'A', theme: 'RocketWheelLite', weight: 50 },
+      { id: 'B', theme: 'RocketWheelPro', weight: 50 },
+    ],
+  },
+}
+```
+
+### Як працює вибір варіанту
+
+```javascript
+// bootstrap.js - спрощена логіка
+function resolveABVariant(themesConfig, project) {
+  const test = themesConfig.abTests[project]
+  if (!test) return null
+
+  const userId = getOrCreateABUserId()  // з localStorage або новий UUID
+  const hash = fnv1aHash(userId + ':' + test.testId)  // детерміністичний хеш
+  const variant = pickVariant(test.variants, hash % 100)  // вибір за вагою
+
+  return {
+    testId: test.testId,
+    variantId: variant.id,
+    theme: findTheme(variant.theme)
+  }
+}
+```
+
+### Коли A/B тест НЕ застосовується
+
+A/B тестування **вимикається** якщо:
+
+- Явно вказано параметр `?style=` — користувач/розробник обрав конкретну тему
+- Для проекту не налаштовано A/B тест в `config.ts`
+- Тема з варіанту не знайдена в реєстрі тем
+
+### Доступ до результату A/B тесту
+
+```javascript
+// В консолі браузера
+window.currentTheme.abTest
+// { testId: 'rocket_theme_v1', variantId: 'A' } або null
+```
+
+### Додавання нового A/B тесту
+
+1. Відкрийте `src/ab/config.ts`
+2. Додайте новий тест для потрібного проекту:
+
+```typescript
+export const abTests: ABTestsConfig = {
+  rocket: {
+    testId: 'rocket_theme_v1',
+    variants: [
+      { id: 'A', theme: 'RocketWheelLite', weight: 50 },
+      { id: 'B', theme: 'RocketWheelPro', weight: 50 },
+    ],
+  },
+  // Новий тест для проекту king
+  king: {
+    testId: 'king_theme_v1',
+    variants: [
+      { id: 'control', theme: 'KingWheel', weight: 80 },
+      { id: 'experiment', theme: 'KingWheelNew', weight: 20 },
+    ],
+  },
+}
+```
+
+3. Переконайтеся, що всі теми з варіантів існують в `src/themes/`
+4. Перезапустіть dev-сервер для оновлення `themes-config.js`
+
+### Тестування A/B функціоналу
+
+```javascript
+// Перевірити поточний варіант
+console.log(window.currentTheme.abTest)
+
+// Перевірити user ID
+console.log(localStorage.getItem('ab_user_id'))
+
+// Скинути user ID для отримання нового варіанту
+localStorage.removeItem('ab_user_id')
+location.reload()
+```
+
+## 📋 Аналітика
+
+Віджет інтегрований з FullStory та Google Analytics 4 для відстеження взаємодій користувачів та аналізу конверсій A/B тестів.
+
+### Провайдери аналітики
+
+| Провайдер | Призначення | Активація |
+|-----------|-------------|-----------|
+| **FullStory** | Запис сесій, heatmaps | Параметр `?fs_org=XXXXX` |
+| **Google Analytics 4** | Конверсії, A/B аналіз | Завжди активний |
+
+### Відстежувані події
+
+| Подія | Коли відправляється | Параметри |
+|-------|---------------------|-----------|
+| `Widget Loaded` | Після завантаження всіх зображень | `theme`, `project` |
+| `Lootbox View` | При монтуванні компонента | `theme`, `project` |
+| `Spin Started` | При отриманні `startSpin` від батьківського сайту | `theme`, `project` |
+| `Spin Ended` | Після зупинки колеса (за 3 сек до приховання win-анімації) | `prize`, `sector`, `theme`, `project`, `prize_type`, `prize_value`, `prize_currency` |
+
+### Автоматичні параметри
+
+До кожної події автоматично додаються:
+
+```typescript
+{
+  session_id: string,      // UUID сесії (sessionStorage)
+  host: string,            // Домен батьківського сайту (document.referrer)
+  env: 'dev' | 'prod',     // Середовище
+  ab_test_id?: string,     // ID A/B тесту (якщо активний)
+  ab_variant?: string,     // Варіант A/B тесту (якщо активний)
+}
+```
+
+### GA4 інтеграція
+
+Google Analytics 4 інтегрований через Cloudflare Worker проксі для обходу блокувальників реклами:
+
+```typescript
+// src/composables/useAnalytics.ts
+const GA4_ENDPOINT = 'https://still-band-a01d.upstars-marbella.workers.dev'
+const GA4_MEASUREMENT_ID = 'G-XXXXXXXXXX'
+```
+
+### Аналіз A/B конверсій в GA4
+
+1. Відкрийте **Google Analytics** → **Explore** → **Free Form**
+2. Додайте вимір: `ab_variant`
+3. Додайте метрики: `Event count` для подій `lootbox_view`, `spin_started`, `spin_ended`
+4. Порівняйте конверсію між варіантами A та B
+
+### Використання в коді
+
+```typescript
+import { useAnalytics } from '@/composables/useAnalytics'
+
+const { track } = useAnalytics()
+
+// Відправка події
+track('Custom Event', {
+  custom_param: 'value'
+})
+// A/B параметри додаються автоматично
 ```
 
 ## 📋 Оптимізації
