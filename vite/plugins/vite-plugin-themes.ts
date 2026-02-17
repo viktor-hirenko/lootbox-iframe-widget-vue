@@ -76,7 +76,7 @@ export type ThemeConfig = {
 type RegistryTheme = ThemeConfig & { id: string; images: string[] }
 
 /** Формат реєстру, який віддаємо у /themes/themes-config.js */
-type Registry = { themes: RegistryTheme[] }
+type Registry = { themes: RegistryTheme[]; abTests?: Record<string, unknown> }
 
 /** Мінімальна карта MIME — достатньо для наших типів файлів */
 const MIME: Record<string, string> = {
@@ -225,6 +225,35 @@ function collectImages(themeId: string): {
   return { rels, urls, map }
 }
 
+/** Прочитати конфіг A/B-тестів з src/ab/config.ts */
+async function readABTestsConfig(): Promise<Record<string, unknown> | null> {
+  const abConfigPath = path.join(ROOT, 'src/ab/config.ts')
+  if (!fs.existsSync(abConfigPath) || !esbuild) return null
+
+  try {
+    const timestamp = Date.now()
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ab-config-'))
+    const tmpFile = path.join(tmpDir, `ab-config-${timestamp}.mjs`)
+
+    await esbuild.build({
+      entryPoints: [abConfigPath],
+      bundle: true,
+      format: 'esm',
+      outfile: tmpFile,
+      write: true,
+      platform: 'node',
+      target: 'es2020',
+      tsconfig: path.resolve(ROOT, 'tsconfig.json'),
+    })
+
+    const mod = await import(`${pathToFileURL(tmpFile).href}?t=${timestamp}`)
+    return (mod.abTests ?? null) as Record<string, unknown> | null
+  } catch (e: any) {
+    console.warn(`[themes] Failed to read A/B config: ${e.message}`)
+    return null
+  }
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // DEV handlers
 // ──────────────────────────────────────────────────────────────────────────────
@@ -244,7 +273,8 @@ async function handleRegistry(res: any): Promise<void> {
   }
   themes.sort((a, b) => a.styleId - b.styleId)
 
-  const reg: Registry = { themes }
+  const abTests = await readABTestsConfig()
+  const reg: Registry = { themes, ...(abTests ? { abTests } : {}) }
   res.setHeader('Content-Type', MIME['.js'])
   res.end(`window.THEMES_CONFIG = ${JSON.stringify(reg, null, 2)};`)
 }
@@ -368,8 +398,10 @@ export function themesPlugin(): Plugin {
         reg.themes.push({ id, ...cfg, images: urls })
       }
 
-      // 4) Один реєстр на всі теми
+      // 4) Один реєстр на всі теми + A/B конфіг
       reg.themes.sort((a, b) => a.styleId - b.styleId)
+      const abTests = await readABTestsConfig()
+      if (abTests) reg.abTests = abTests
       this.emitFile({
         type: 'asset',
         fileName: `${OUT_BASE}/themes-config.js`,

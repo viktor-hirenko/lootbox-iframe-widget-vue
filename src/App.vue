@@ -426,8 +426,11 @@ onMounted(async () => {
   // Тільки ПІСЛЯ завантаження — повідомляємо батьківське вікно
   postToParent('lootboxReady')
 
-  // Аналітика: відправляємо подію напряму в FullStory
+  // Аналітика: подія завантаження віджета
   track('Widget Loaded', { theme: currentTheme, project: currentProject })
+
+  // Подія для воронки конверсій A/B-тестування: view → start → complete
+  track('Lootbox View', { theme: currentTheme, project: currentProject })
 
   // Передзавантаження win-анімації у фоні ПІСЛЯ критичних асетів
   // Не блокує UI — завантаження йде паралельно

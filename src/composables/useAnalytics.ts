@@ -76,12 +76,22 @@ const getHost = (): string => {
 /**
  * Загальні параметри для всіх подій аналітики
  * Автоматично додаються до кожного track() виклику
+ * Якщо активний A/B тест — додає ab_test_id та ab_variant
  */
-const getCommonParams = (): Record<string, string> => ({
-  session_id: getSessionId(),
-  host: getHost(),
-  env: import.meta.env.DEV ? 'dev' : 'prod',
-})
+const getCommonParams = (): Record<string, string> => {
+  const abTest = window.currentTheme?.abTest
+  return {
+    session_id: getSessionId(),
+    host: getHost(),
+    env: import.meta.env.DEV ? 'dev' : 'prod',
+    ...(abTest
+      ? {
+          ab_test_id: abTest.testId,
+          ab_variant: abTest.variantId,
+        }
+      : {}),
+  }
+}
 
 export function useAnalytics() {
   /**

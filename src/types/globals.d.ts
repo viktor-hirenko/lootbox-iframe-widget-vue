@@ -33,6 +33,17 @@ declare global {
         }
         images: string[]
       }>
+      abTests?: Record<
+        string,
+        {
+          testId: string
+          variants: Array<{
+            id: string
+            theme: string
+            weight: number
+          }>
+        }
+      >
     }
 
     /**
@@ -72,6 +83,10 @@ declare global {
               medium: string
               long: string
             }
+          } | null
+          abTest: {
+            testId: string
+            variantId: string
           } | null
           readonly ready: boolean
         }

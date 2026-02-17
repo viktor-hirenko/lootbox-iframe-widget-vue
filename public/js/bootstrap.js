@@ -181,8 +181,79 @@
     return map
   }
 
+  // === A/B ТЕСТУВАННЯ ===
+
+  /** Детерміністичний хеш рядка (FNV-1a) → число */
+  function fnv1aHash(str) {
+    var hash = 2166136261
+    for (var i = 0; i < str.length; i++) {
+      hash ^= str.charCodeAt(i)
+      hash = (hash * 16777619) >>> 0
+    }
+    return hash
+  }
+
+  /** Отримати або створити стабільний userId для A/B розподілу */
+  function getOrCreateABUserId() {
+    var key = 'ab_user_id'
+    try {
+      var id = localStorage.getItem(key)
+      if (!id) {
+        id = crypto.randomUUID()
+        localStorage.setItem(key, id)
+      }
+      return id
+    } catch {
+      return crypto.randomUUID()
+    }
+  }
+
+  /** Обрати варіант за кумулятивними вагами */
+  function pickVariant(variants, hash) {
+    var bucket = hash % 100
+    var cumulative = 0
+    for (var i = 0; i < variants.length; i++) {
+      cumulative += variants[i].weight
+      if (bucket < cumulative) return variants[i]
+    }
+    return variants[variants.length - 1]
+  }
+
+  /**
+   * Визначити A/B варіант для проекту
+   *
+   * @returns {{ testId: string, variantId: string, theme: object } | null}
+   */
+  function resolveABVariant(themesConfig, project) {
+    var abTests = themesConfig.abTests
+    if (!abTests || !project || !abTests[project]) return null
+
+    var test = abTests[project]
+    if (!test.variants || !test.variants.length) return null
+
+    var userId = getOrCreateABUserId()
+    var hash = fnv1aHash(userId + ':' + test.testId)
+    var variant = pickVariant(test.variants, hash)
+
+    var themes = Array.isArray(themesConfig.themes) ? themesConfig.themes : []
+    var variantTheme = themes.find(function (t) {
+      return t.name === variant.theme
+    })
+
+    if (!variantTheme) {
+      console.warn('[Lootbox A/B] Theme "' + variant.theme + '" not found for variant ' + variant.id)
+      return null
+    }
+
+    return {
+      testId: test.testId,
+      variantId: variant.id,
+      theme: variantTheme,
+    }
+  }
+
   /** Експорт рантайму теми для Vue */
-  function exposeThemeRuntime(theme, params, imagesMap) {
+  function exposeThemeRuntime(theme, params, imagesMap, abResult) {
     window.currentTheme = {
       styleId: theme.styleId,
       name: theme.name,
@@ -201,6 +272,9 @@
       logic: theme.logic || {},
       fontSizes: theme.fontSizes || null,
       images: imagesMap,
+      abTest: abResult
+        ? { testId: abResult.testId, variantId: abResult.variantId }
+        : null,
     }
 
     // Застосовуємо CSS клас для відключення анімацій якщо лутбокс неактивний
@@ -219,6 +293,16 @@
 
   let selectedTheme = selectTheme(themesConfig, urlParams)
 
+  // A/B тестування: якщо для проекту є активний тест і ?style= НЕ вказано явно —
+  // підміняємо тему на варіант користувача
+  var abResult = null
+  if (urlParams.project && !urlParams.themeName) {
+    abResult = resolveABVariant(themesConfig, urlParams.project)
+    if (abResult) {
+      selectedTheme = abResult.theme
+    }
+  }
+
   setThemeDataAttribute(selectedTheme)
 
   const cssReady = loadThemeStylesheet(selectedTheme)
@@ -228,5 +312,5 @@
   await cssReady
 
   const imageMap = buildImageMap(selectedTheme.images)
-  exposeThemeRuntime(selectedTheme, urlParams, imageMap) // window.currentTheme = { ... }
+  exposeThemeRuntime(selectedTheme, urlParams, imageMap, abResult) // window.currentTheme = { ... }
 })()
