@@ -17,6 +17,9 @@
 // GA4 Worker endpoint (проксі для обходу блокування Safari / AdBlock)
 const GA_WORKER_URL = 'https://still-band-a01d.upstars-marbella.workers.dev'
 
+// Прапорець для вимкнення аналітики (використовується для preview iframe на test-ab.html)
+const isAnalyticsDisabled = new URLSearchParams(window.location.search).has('no_analytics')
+
 // Ключ для збереження client_id в localStorage
 const GA_CLIENT_ID_KEY = 'ga_client_id'
 
@@ -149,8 +152,11 @@ export function useAnalytics() {
   /**
    * Універсальний трекінг з автоматичним додаванням загальних параметрів
    * Кожна подія отримує: session_id, host, env
+   * Якщо в URL є ?no_analytics — нічого не відправляється (preview iframe)
    */
   const track = (eventName: string, properties?: Record<string, unknown>): void => {
+    if (isAnalyticsDisabled) return
+
     const enrichedProperties = {
       ...getCommonParams(),
       ...(properties ?? {}),
