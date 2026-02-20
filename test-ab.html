@@ -508,9 +508,6 @@
         <span class="config-label">Варіант B:</span>
         <span class="badge badge-b" id="cfgVariantB">—</span>
       </div>
-      <div class="config-item">
-        <span class="badge badge-active">A/B Active</span>
-      </div>
     </div>
 
     <!-- Section 1: Previews -->
@@ -605,6 +602,13 @@
           </button>
           <p class="hint">
             Скидання видаляє ab_user_id з localStorage і перезавантажує iframe — новий "користувач" отримує новий варіант
+          </p>
+          <div style="height: 8px"></div>
+          <button class="btn btn-reset" onclick="resetAll()">
+            Скинути все (для демо)
+          </button>
+          <p class="hint">
+            Повне скидання: обнуляє лічильник розподілу, очищує лог подій та перезавантажує iframe
           </p>
         </div>
 
@@ -762,6 +766,28 @@
         logEvent('ready', 'User Reset', { action: 'localStorage.removeItem("ab_user_id")' })
       }
 
+      function resetAll() {
+        localStorage.removeItem('ab_user_id')
+        distribution = { A: 0, B: 0 }
+        currentVariant = null
+        isSpinning = false
+        liveReady = false
+
+        document.getElementById('distACount').textContent = '0'
+        document.getElementById('distBCount').textContent = '0'
+        document.getElementById('distBar').innerHTML = '<div class="bar-empty"></div>'
+        document.getElementById('infoUserId').textContent = '—'
+        document.getElementById('infoVariant').textContent = '—'
+        document.getElementById('infoTheme').textContent = '—'
+        document.getElementById('infoTestId').textContent = '—'
+        document.getElementById('liveVariantBadge').textContent = '—'
+        document.getElementById('liveVariantBadge').className = 'badge'
+
+        clearEvents()
+        updateSpinButton()
+        liveFrame.src = buildUrl({ project: PROJECT, sectors: SECTORS, sectors_type: SECTORS_TYPE })
+      }
+
       function startLiveSpin() {
         if (isSpinning || !liveReady) return
         isSpinning = true
@@ -788,6 +814,7 @@
 
       window.addEventListener('message', function (event) {
         if (!event.data || typeof event.data !== 'object') return
+        if (event.source !== liveFrame.contentWindow) return
 
         if (event.data.type === 'lootboxReady') {
           liveReady = true
