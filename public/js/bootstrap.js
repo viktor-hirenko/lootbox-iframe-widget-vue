@@ -24,6 +24,8 @@
       sectors: searchParams.get('sectors') || null,
       sectorsType: searchParams.get('sectors_type') || null,
       active: activeParam !== 'false', // true за замовчуванням, false тільки якщо явно вказано
+      userId: searchParams.get('user_id') || null,
+      ab: searchParams.get('ab') === 'true',
     }
   }
 
@@ -263,6 +265,7 @@
       sectors: params.sectors,
       sectorsType: params.sectorsType,
       isActive: params.active,
+      userId: params.userId,
       stylesReady: true,
       imagesReady: true,
       get ready() {
@@ -293,10 +296,10 @@
 
   let selectedTheme = selectTheme(themesConfig, urlParams)
 
-  // A/B тестування: якщо для проекту є активний тест і ?style= НЕ вказано явно —
-  // підміняємо тему на варіант користувача
+  // A/B тестування: спрацьовує ТІЛЬКИ якщо явно передано ?ab=true
+  // та НЕ вказано конкретну тему (?style=)
   var abResult = null
-  if (urlParams.project && !urlParams.themeName) {
+  if (urlParams.project && urlParams.ab && !urlParams.themeName) {
     abResult = resolveABVariant(themesConfig, urlParams.project)
     if (abResult) {
       selectedTheme = abResult.theme

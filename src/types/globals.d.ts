@@ -61,6 +61,7 @@ declare global {
           sectors: string | null
           sectorsType: string | null
           isActive: boolean
+          userId: string | null
           images: Record<string, string>
           timings: Record<string, number>
           logic: Record<string, unknown>

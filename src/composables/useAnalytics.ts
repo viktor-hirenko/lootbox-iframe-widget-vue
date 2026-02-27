@@ -83,10 +83,12 @@ const getHost = (): string => {
  */
 const getCommonParams = (): Record<string, string> => {
   const abTest = window.currentTheme?.abTest
+  const userId = window.currentTheme?.userId
   return {
     session_id: getSessionId(),
     host: getHost(),
     env: import.meta.env.DEV ? 'dev' : 'prod',
+    ...(userId ? { user_id: userId } : {}),
     ...(abTest
       ? {
           ab_test_id: abTest.testId,
@@ -123,6 +125,7 @@ export function useAnalytics() {
     try {
       const ga4EventName = eventName.toLowerCase().replace(/\s+/g, '_')
       const isDebug = import.meta.env.DEV
+      const userId = window.currentTheme?.userId
 
       await fetch(GA_WORKER_URL, {
         method: 'POST',
@@ -131,7 +134,8 @@ export function useAnalytics() {
         },
         body: JSON.stringify({
           client_id: getClientId(),
-          user_agent: navigator.userAgent, // Для визначення браузера в GA4
+          ...(userId ? { user_id: userId } : {}),
+          user_agent: navigator.userAgent,
           events: [
             {
               name: ga4EventName,

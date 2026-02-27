@@ -716,6 +716,12 @@
               ab_test_id: ab.testId,
               ab_variant: ab.variantId,
             })
+
+            logEvent('view', 'Lootbox View', {
+              theme: theme.name,
+              ab_test_id: ab.testId,
+              ab_variant: ab.variantId,
+            })
           } else {
             document.getElementById('infoVariant').textContent = 'Без A/B'
             document.getElementById('infoTheme').textContent = theme.name
@@ -761,7 +767,7 @@
         isSpinning = false
         liveReady = false
         updateSpinButton()
-        liveFrame.src = buildUrl({ project: PROJECT, sectors: SECTORS, sectors_type: SECTORS_TYPE })
+        liveFrame.src = buildUrl({ project: PROJECT, sectors: SECTORS, sectors_type: SECTORS_TYPE, ab: 'true' })
 
         logEvent('ready', 'User Reset', { action: 'localStorage.removeItem("ab_user_id")' })
       }
@@ -785,7 +791,7 @@
 
         clearEvents()
         updateSpinButton()
-        liveFrame.src = buildUrl({ project: PROJECT, sectors: SECTORS, sectors_type: SECTORS_TYPE })
+        liveFrame.src = buildUrl({ project: PROJECT, sectors: SECTORS, sectors_type: SECTORS_TYPE, ab: 'true' })
       }
 
       function startLiveSpin() {
@@ -873,7 +879,7 @@
       }
 
       // Init
-      liveFrame.src = buildUrl({ project: PROJECT, sectors: SECTORS, sectors_type: SECTORS_TYPE })
+      liveFrame.src = buildUrl({ project: PROJECT, sectors: SECTORS, sectors_type: SECTORS_TYPE, ab: 'true' })
 
       liveFrame.addEventListener('load', function () {
         setTimeout(function () {
