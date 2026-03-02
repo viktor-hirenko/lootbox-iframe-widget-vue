@@ -224,16 +224,19 @@
   /**
    * Визначити A/B варіант для проекту
    *
+   * @param {object} themesConfig - Конфігурація тем з abTests
+   * @param {string} project - Назва проекту
+   * @param {string|null} urlUserId - user_id з URL (реальний користувач з проду)
    * @returns {{ testId: string, variantId: string, theme: object } | null}
    */
-  function resolveABVariant(themesConfig, project) {
+  function resolveABVariant(themesConfig, project, urlUserId) {
     var abTests = themesConfig.abTests
     if (!abTests || !project || !abTests[project]) return null
 
     var test = abTests[project]
     if (!test.variants || !test.variants.length) return null
 
-    var userId = getOrCreateABUserId()
+    var userId = urlUserId || getOrCreateABUserId()
     var hash = fnv1aHash(userId + ':' + test.testId)
     var variant = pickVariant(test.variants, hash)
 
@@ -300,7 +303,7 @@
   // та НЕ вказано конкретну тему (?style=)
   var abResult = null
   if (urlParams.project && urlParams.ab && !urlParams.themeName) {
-    abResult = resolveABVariant(themesConfig, urlParams.project)
+    abResult = resolveABVariant(themesConfig, urlParams.project, urlParams.userId)
     if (abResult) {
       selectedTheme = abResult.theme
     }
