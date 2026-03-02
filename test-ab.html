@@ -464,6 +464,129 @@
         text-decoration: underline;
       }
 
+      /* --- Simulation Toggle --- */
+      .simulation-toggle-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 22px;
+        flex-shrink: 0;
+      }
+
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: #e5e7eb;
+        border-radius: 22px;
+        transition: 0.2s;
+      }
+
+      .toggle-slider:before {
+        content: '';
+        position: absolute;
+        height: 16px;
+        width: 16px;
+        left: 3px;
+        bottom: 3px;
+        background: #fff;
+        border-radius: 50%;
+        transition: 0.2s;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      }
+
+      .toggle-switch input:checked + .toggle-slider {
+        background: #6366f1;
+      }
+
+      .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(18px);
+      }
+
+      .toggle-label-text {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+      }
+
+      /* --- Simulation Panel --- */
+      .simulation-panel .sim-hint {
+        font-size: 12px;
+        color: #6c757d;
+        margin-bottom: 10px;
+        line-height: 1.5;
+      }
+
+      .users-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      .users-table th {
+        text-align: left;
+        padding: 6px 8px;
+        color: #6c757d;
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        border-bottom: 1px solid #f0f2f5;
+      }
+
+      .users-table td {
+        padding: 7px 8px;
+        border-bottom: 1px solid #f9fafb;
+        font-family: 'SF Mono', Monaco, monospace;
+        vertical-align: middle;
+      }
+
+      .users-table tr.active-user td {
+        background: #eff6ff;
+      }
+
+      .users-table tr.active-user td:first-child {
+        border-left: 3px solid #6366f1;
+        padding-left: 5px;
+      }
+
+      .btn-select-user {
+        padding: 3px 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background: #fff;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        color: #374151;
+        transition: all 0.15s ease;
+      }
+
+      .btn-select-user:hover {
+        background: #6366f1;
+        border-color: #6366f1;
+        color: #fff;
+      }
+
+      .btn-select-user.active {
+        background: #6366f1;
+        border-color: #6366f1;
+        color: #fff;
+      }
+
       @media (max-width: 900px) {
         .previews-grid {
           grid-template-columns: 1fr;
@@ -537,9 +660,40 @@
       </div>
     </div>
 
-    <!-- Section 2: Live A/B Test -->
+    <!-- Section 2: User Simulation -->
     <div class="section-title">
       <span class="section-number">2</span>
+      Симуляція реальних user_id
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+        <label class="toggle-switch">
+          <input type="checkbox" id="toggleSimulation" onchange="toggleSimulationMode()" />
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="toggle-label-text">Увімкнути</span>
+      </div>
+    </div>
+
+    <div class="simulation-panel" id="simulationPanel" style="display:none; margin-bottom: 32px;">
+      <div class="info-card">
+        <p class="sim-hint" style="margin-bottom: 16px;">
+          Симулює ситуацію, коли різні реальні користувачі заходять на сайт. Кнопка "Скинути користувача" циклічно перебирає наступний user_id з масиву нижче. Варіант A/B визначається автоматично за хешем ID — так само, як у bootstrap.js.
+        </p>
+        <table class="users-table" id="usersTable">
+          <thead>
+            <tr>
+              <th>user_id</th>
+              <th>Варіант (A/B)</th>
+              <th>Дія</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Section 3: Live A/B Test -->
+    <div class="section-title">
+      <span class="section-number">3</span>
       Живий A/B тест
     </div>
 
@@ -597,11 +751,11 @@
             </button>
           </div>
           <div style="height: 8px"></div>
-          <button class="btn btn-reset" onclick="resetUser()">
+          <button class="btn btn-reset" id="btnResetUser" onclick="resetUser()">
             Скинути користувача
           </button>
-          <p class="hint">
-            Скидання видаляє ab_user_id з localStorage і перезавантажує iframe — новий "користувач" отримує новий варіант
+          <p class="hint" id="hintResetUser">
+            В режимі симуляції — перехід до наступного user_id з масиву. Без симуляції — видаляє ab_user_id з localStorage
           </p>
           <div style="height: 8px"></div>
           <button class="btn btn-reset" onclick="resetAll()">
@@ -622,9 +776,9 @@
       </div>
     </div>
 
-    <!-- Section 3: Events Log -->
+    <!-- Section 4: Events Log -->
     <div class="section-title">
-      <span class="section-number">3</span>
+      <span class="section-number">4</span>
       Аналітичні події
     </div>
 
@@ -635,6 +789,7 @@
       </div>
       <div class="events-log" id="eventsLog"></div>
     </div>
+
     </div>
 
     <script>
@@ -646,6 +801,15 @@
       var currentVariant = null
       var isSpinning = false
       var liveReady = false
+
+      // Simulation mode
+      var MOCK_USERS = [
+        'user_001', 'user_002', 'user_003', 'user_004', 'user_005',
+        'user_006', 'user_007', 'user_008', 'user_009', 'user_010',
+      ]
+      var mockUserIndex = 0
+      var simulationMode = false
+      var activeSimUserId = null
 
       var liveFrame = document.getElementById('liveFrame')
       var previewFrameA = document.getElementById('previewFrameA')
@@ -763,13 +927,27 @@
       }
 
       function resetUser() {
-        localStorage.removeItem('ab_user_id')
+        if (simulationMode) {
+          var userId = MOCK_USERS[mockUserIndex % MOCK_USERS.length]
+          mockUserIndex++
+          activeSimUserId = userId
+          localStorage.setItem('ab_user_id', userId)
+          renderUsersTable()
+          logEvent('ready', 'User Reset (Simulation)', { user_id: userId })
+        } else {
+          localStorage.removeItem('ab_user_id')
+          logEvent('ready', 'User Reset', { action: 'localStorage.removeItem("ab_user_id")' })
+        }
         isSpinning = false
         liveReady = false
         updateSpinButton()
-        liveFrame.src = buildUrl({ project: PROJECT, sectors: SECTORS, sectors_type: SECTORS_TYPE, ab: 'true' })
-
-        logEvent('ready', 'User Reset', { action: 'localStorage.removeItem("ab_user_id")' })
+        liveFrame.src = buildUrl({
+          project: PROJECT,
+          sectors: SECTORS,
+          sectors_type: SECTORS_TYPE,
+          ab: 'true',
+          ...(simulationMode && activeSimUserId ? { user_id: activeSimUserId } : {}),
+        })
       }
 
       function resetAll() {
@@ -878,6 +1056,79 @@
         document.getElementById('eventsLog').innerHTML = ''
       }
 
+      // FNV-1a hash — репліка логіки з bootstrap.js
+      function fnv1aHash(str) {
+        var hash = 2166136261
+        for (var i = 0; i < str.length; i++) {
+          hash ^= str.charCodeAt(i)
+          hash = (hash * 16777619) >>> 0
+        }
+        return hash
+      }
+
+      function computeVariant(userId, config) {
+        if (!config) return '?'
+        var hash = fnv1aHash(userId + ':' + config.testId)
+        var value = hash % 100
+        var cumulative = 0
+        for (var i = 0; i < config.variants.length; i++) {
+          cumulative += config.variants[i].weight
+          if (value < cumulative) return config.variants[i].id
+        }
+        return config.variants[config.variants.length - 1].id
+      }
+
+      function renderUsersTable() {
+        var config = readConfig()
+        var tbody = document.getElementById('usersTableBody')
+        tbody.innerHTML = ''
+        MOCK_USERS.forEach(function (userId) {
+          var variant = computeVariant(userId, config)
+          var isActive = userId === activeSimUserId
+          var tr = document.createElement('tr')
+          if (isActive) tr.className = 'active-user'
+          tr.innerHTML =
+            '<td>' + userId + '</td>' +
+            '<td><span class="badge badge-' + variant.toLowerCase() + '">' + variant + '</span></td>' +
+            '<td><button class="btn-select-user' + (isActive ? ' active' : '') + '" onclick="selectMockUser(\'' + userId + '\')">' +
+            (isActive ? '✓ Активний' : 'Вибрати') + '</button></td>'
+          tbody.appendChild(tr)
+        })
+      }
+
+      function selectMockUser(userId) {
+        activeSimUserId = userId
+        mockUserIndex = (MOCK_USERS.indexOf(userId) + 1) % MOCK_USERS.length
+        localStorage.setItem('ab_user_id', userId)
+        renderUsersTable()
+        isSpinning = false
+        liveReady = false
+        updateSpinButton()
+        liveFrame.src = buildUrl({
+          project: PROJECT,
+          sectors: SECTORS,
+          sectors_type: SECTORS_TYPE,
+          ab: 'true',
+          user_id: userId,
+        })
+        logEvent('ready', 'User Selected (Simulation)', { user_id: userId })
+      }
+
+      function toggleSimulationMode() {
+        simulationMode = document.getElementById('toggleSimulation').checked
+        var panel = document.getElementById('simulationPanel')
+        if (simulationMode) {
+          panel.style.display = 'block'
+          mockUserIndex = 0
+          activeSimUserId = null
+          renderUsersTable()
+        } else {
+          panel.style.display = 'none'
+          activeSimUserId = null
+          localStorage.removeItem('ab_user_id')
+        }
+      }
+
       // Init
       liveFrame.src = buildUrl({ project: PROJECT, sectors: SECTORS, sectors_type: SECTORS_TYPE, ab: 'true' })
 
@@ -886,6 +1137,7 @@
           var config = readConfig()
           if (config) {
             initPreviews(config)
+            if (simulationMode) renderUsersTable()
           }
         }, 500)
       })
