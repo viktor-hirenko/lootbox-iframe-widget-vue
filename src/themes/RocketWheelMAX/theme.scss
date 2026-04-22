@@ -1,0 +1,373 @@
+/* Тема RocketWheelMAX
+ * ⚠️ Тимчасово використовує стилі та ассети RocketWheelPro як placeholder.
+ * Замінити на фінальні стилі MAX, коли будуть готові дизайн-матеріали.
+ */
+@use './styles/animations';
+@use './styles/tokens';
+
+.loot-box-spin-wheel-container {
+  position: relative;
+  width: 100vmin;
+  height: 100vmin;
+}
+
+.wheel-sectors-mask {
+  position: absolute;
+  top: 12.5%;
+  left: 7.7%;
+  z-index: 5;
+  width: 85%;
+  height: 85%;
+  border-radius: 100%;
+  overflow: hidden;
+  transition-delay: 3s;
+  transition: opacity 4s linear;
+}
+
+.wheel-sectors {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+}
+
+.wheel-frame {
+  position: absolute;
+  top: 6.8%;
+  left: 2.5%;
+  z-index: 4;
+  width: 95%;
+  height: auto;
+  aspect-ratio: 1/1;
+}
+
+.wheel-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: 100%;
+  height: auto;
+}
+
+.sector-border {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  width: 100%;
+  height: auto;
+}
+
+.wheel-blurred {
+  z-index: 5;
+  transition: opacity 2s;
+}
+
+.wheel-pointer {
+  position: absolute;
+  top: -8.4%;
+  left: 50%;
+  z-index: 17;
+  transform: translateX(-50%);
+  width: 33%;
+  height: auto;
+  aspect-ratio: 137/105;
+}
+
+.wheel-center {
+  position: absolute;
+  top: 46%;
+  left: 41.5%;
+  z-index: 11;
+  width: 17%;
+  height: auto;
+  aspect-ratio: 1/1;
+  filter: drop-shadow(2px 4px 7px rgba(0, 0, 0, 0.5));
+}
+
+.wheel-pointer-shadow {
+  position: absolute;
+  top: 9%;
+  left: 50%;
+  z-index: 16;
+  width: 7%;
+  height: auto;
+  transform: translateX(-50%);
+  aspect-ratio: 11/14;
+}
+
+.center-frame {
+  position: absolute;
+  top: 54.6%;
+  left: 50%;
+  z-index: 12;
+  height: 13.5%;
+  width: 13.5%;
+  overflow: hidden;
+  border-radius: 100%;
+  transform: translate(-50%, -50%);
+}
+
+.center-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: all 3s linear;
+  animation: centerBgAnimation 20s linear infinite;
+  aspect-ratio: 1/1;
+}
+
+.center-flashes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: all 3s linear;
+  aspect-ratio: 1/1;
+}
+
+.center-bg-animation-pause {
+  animation-play-state: paused;
+}
+
+.center-bg-dark {
+  animation: center-bg-dark 2s linear forwards;
+}
+
+.purple-wave {
+  position: absolute;
+  top: 4.5%;
+  left: 0;
+  z-index: 15;
+  width: 100%;
+  height: auto;
+  mix-blend-mode: color-dodge;
+  cursor: pointer;
+  aspect-ratio: 1/1;
+}
+
+.winSector .loot-box-sum,
+.winSector .loot-box-currency {
+  animation: sumTextHighlightAnimation 0.7s linear infinite;
+}
+
+.wheel-center-black {
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  height: auto;
+  width: 120%;
+  z-index: 10;
+  aspect-ratio: 1/1;
+}
+
+.hide-center-overflow {
+  overflow: hidden;
+  border-radius: 100%;
+}
+
+.wheel-mask {
+  top: -3%;
+  left: -3%;
+  position: absolute;
+  z-index: 6;
+  width: 106%;
+  height: auto;
+  transition: opacity 3s linear;
+}
+
+.win-frame {
+  top: 11.3%;
+  left: 32.9%;
+  position: absolute;
+  z-index: 7;
+  width: 35vmin;
+  height: auto;
+  transition: opacity 1s linear;
+  transition-delay: 6s;
+  transform-origin: 50% 100%;
+  mix-blend-mode: color-dodge;
+  animation: lampFlashes1 0.7s linear infinite;
+}
+
+.bonus-type {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  width: 100%;
+  height: auto;
+  transform-origin: center;
+}
+
+.loot-box-prize-type {
+  fill: var(--color-primary-2);
+  font-family: 'Rubik', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  transform: translate(7px);
+}
+
+.loot-box-sum {
+  stroke: #1f0832;
+  paint-order: stroke;
+  stroke-width: 1px;
+  stroke-linecap: round;
+  fill: var(--color-primary-5);
+  font-family: 'Roboto Slab', serif;
+  font-weight: 900;
+}
+
+.loot-box-currency {
+  stroke: #1f0832;
+  paint-order: stroke;
+  stroke-width: 0.7px;
+  stroke-linecap: round;
+  fill: var(--color-warning);
+  font-family: 'Roboto Slab', serif;
+  font-weight: 900;
+}
+
+.sector {
+  transform-origin: 50% 50%;
+}
+
+.lamps {
+  position: absolute;
+  top: 9.4%;
+  left: 0.1%;
+  z-index: 0;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 31 / 30;
+}
+
+.lamp {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: inherit;
+  height: inherit;
+}
+
+.lamp-waiting-animation-1 {
+  animation: lampFlashes1 2s infinite linear;
+}
+
+.lamp-spin-animation-1 {
+  animation: lampFlashes1 1s infinite linear;
+}
+
+.lamp-waiting-animation-2 {
+  animation: lampFlashes2 2s infinite linear;
+}
+
+.lamp-spin-animation-2 {
+  animation: lampFlashes2 1s infinite linear;
+}
+
+.lamp-holders {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 100%;
+  height: auto;
+}
+
+.wheel-outer-glow {
+  position: relative;
+  top: -0.7%;
+  left: 0;
+  z-index: 0;
+  aspect-ratio: 414/455;
+}
+
+.win-animation {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 9;
+  width: auto;
+  height: 100%;
+  transform: translate(-50%);
+  transition: opacity 0.5s ease-out;
+}
+
+.win-animation-1 {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 8;
+  height: 100%;
+  width: auto;
+  transform: translate(-50%);
+  mix-blend-mode: color-dodge;
+}
+
+.preload {
+  position: absolute;
+  width: 0;
+  height: 0;
+  display: none;
+  opacity: 0;
+}
+
+.spin-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1/1;
+}
+
+.spin-text {
+  z-index: 50;
+  text-align: center;
+  font-family: 'Roboto Slab', serif;
+  font-weight: 900;
+  font-size: 33px;
+  width: 100%;
+  stroke: #00124b;
+  paint-order: stroke;
+  stroke-width: 4px;
+  stroke-linecap: round;
+  fill: var(--color-primary-5);
+  animation: spinTextLight 5s linear infinite;
+  filter: drop-shadow(0px 0px 6px #9800fd);
+}
+
+.waiting-spin-animation {
+  animation: waitingSpinAnimation 30s ease-in-out infinite;
+}
+
+a {
+  text-decoration: none !important;
+}
+
+.spin-effect {
+  fill: #e2befc !important;
+  animation: spinEffect 0.6s linear forwards;
+}
+
+img {
+  pointer-events: none;
+  user-select: none;
+}
+
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
