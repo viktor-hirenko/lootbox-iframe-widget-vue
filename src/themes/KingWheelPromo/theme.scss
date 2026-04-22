@@ -1,4 +1,4 @@
-/* Тема KingWheel */
+/* Тема KingWheelPromo */
 @use './styles/animations';
 @use './styles/tokens';
 
@@ -12,41 +12,45 @@
   &:before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url('./images/wheelframebg.webp');
+    top: 50%;
+    left: 50%;
+    width: 85%;
+    height: 85%;
+    background-image: url(./images/wheelframebg.svg);
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     pointer-events: none;
+    transform: translate(-50%, -50%);
+  }
 
-    // @media (max-width: 754px) {
-    //   display: none;
-    // }
+  &:after {
+    content: '';
+    position: absolute;
+    top: 13.5%;
+    left: 15.8%;
+    z-index: 5;
+    width: 68%;
+    height: 68%;
+    background-image: url(./images/sectorborder.webp);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    pointer-events: none;
   }
 }
 
 .wheel-sectors-mask {
   position: absolute;
-  top: 14.4%;
-  left: 20%;
+  top: 14.5%;
+  left: 16.7%;
   z-index: 5;
-  width: 60%;
-  height: 60%;
+  width: 66%;
+  height: 66%;
   border-radius: 100%;
   overflow: hidden;
   transition-delay: 3s;
   transition: opacity 4s linear;
-
-  // @media (max-width: 754px) {
-  //   width: 81%;
-  //   height: 81%;
-  //   transform: translateX(-50%);
-  //   left: 50%;
-  //   top: 19.4%;
-  // }
 }
 
 .wheel-sectors {
@@ -65,12 +69,6 @@
   z-index: 4;
   width: 100%;
   height: auto;
-
-  // @media (max-width: 754px) {
-  //   width: 135%;
-  //   left: 50%;
-  //   transform: translateX(-50%);
-  // }
 }
 
 .wheel-bg {
@@ -100,34 +98,23 @@
 
 .wheel-pointer {
   position: absolute;
-  top: 9%;
+  top: 8%;
   left: 50%;
   z-index: 17;
   transform: translateX(-50%);
-  width: 21%;
-  height: auto;
-  aspect-ratio: 137/105;
-
-  // @media (max-width: 754px) {
-  //   top: 12%;
-  //   width: 28%;
-  // }
+  width: 28%;
 }
 
 .wheel-center {
   position: absolute;
-  top: 34%;
+  top: 36.5%;
+
   left: 50%;
   transform: translateX(-50%);
   z-index: 11;
   width: 22%;
   height: auto;
   aspect-ratio: 1/1;
-
-  // @media (max-width: 754px) {
-  //   width: 27%;
-  //   top: 47%;
-  // }
 }
 
 .wheel-pointer-shadow {
@@ -144,20 +131,13 @@
 
 .center-frame {
   position: absolute;
-  top: 33%;
+  top: 36.5%;
   left: 50%;
   z-index: 5;
-  height: 23.5%;
-  width: 23.5%;
+  height: 22.5%;
   overflow: hidden;
   border-radius: 100%;
   transform: translateX(-50%);
-
-  // @media (max-width: 754px) {
-  //   width: 30%;
-  //   height: 30%;
-  //   top: 45%;
-  // }
 }
 
 .center-bg {
@@ -232,13 +212,11 @@
 }
 
 .win-frame {
-  top: 14.7%;
-  left: 50%;
-  transform: translateX(-50%);
-  translate: -50%;
   position: absolute;
+  top: 14.7%;
+  left: 36.5%;
   z-index: 7;
-  width: 24vmin;
+  width: 26vmin;
   height: auto;
   transition: opacity 1s linear;
   transition-delay: 6s;
@@ -257,8 +235,15 @@
   transform-origin: center;
 }
 
-.loot-box-prize-type {
+.sector:nth-of-type(odd) .loot-box-prize-type {
   fill: var(--color-white);
+}
+
+.sector:nth-of-type(even) .loot-box-prize-type {
+  fill: #4627ea;
+}
+
+.loot-box-prize-type {
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
   letter-spacing: -0.1px;
@@ -293,18 +278,12 @@
 
 .lamps {
   position: absolute;
-  top: 0.7%;
+  top: 0.2%;
   left: 0;
   z-index: 0;
   width: 100%;
   height: auto;
   aspect-ratio: 31 / 30;
-
-  // @media (max-width: 754px) {
-  //   left: 50%;
-  //   transform: translateX(-50%);
-  //   width: 116%;
-  // }
 }
 
 .lamp {
@@ -314,12 +293,6 @@
   z-index: 0;
   width: inherit;
   height: inherit;
-
-  // @media (max-width: 754px) {
-  //   left: 50%;
-  //   transform: translateX(-50%);
-  //   width: 116%;
-  // }
 }
 
 .lamp-waiting-animation-1 {
@@ -355,11 +328,6 @@
   z-index: 0;
   width: 72.6vmin;
   height: auto;
-
-  // @media (max-width: 754px) {
-  //   width: 98%;
-  //   top: 12vmin;
-  // }
 }
 
 .win-animation {

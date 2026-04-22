@@ -1,0 +1,1146 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A/B Testing Dashboard — Lootbox Widget</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #f0f2f5;
+        color: #1a1a2e;
+        padding: 24px;
+      }
+
+      .page-container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .page-header {
+        text-align: center;
+        margin-bottom: 24px;
+      }
+
+      .page-header h1 {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      .page-header p {
+        color: #6c757d;
+        font-size: 14px;
+      }
+
+      .config-bar {
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        flex-wrap: wrap;
+      }
+
+      .config-bar .config-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+      }
+
+      .config-bar .config-label {
+        color: #6c757d;
+        font-weight: 500;
+      }
+
+      .config-bar .config-value {
+        font-weight: 600;
+        font-family: 'SF Mono', Monaco, monospace;
+        font-size: 13px;
+        background: #f0f2f5;
+        padding: 4px 10px;
+        border-radius: 6px;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .badge-a {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+
+      .badge-b {
+        background: #fce7f3;
+        color: #be185d;
+      }
+
+      .badge-active {
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      /* --- Section 1: Previews --- */
+      .section-title {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .section-title .section-number {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #1a1a2e;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+
+      .previews-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 32px;
+      }
+
+      .preview-card {
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+
+      .preview-card-header {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #f0f2f5;
+      }
+
+      .preview-card-header .variant-label {
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      .preview-card-header .theme-name {
+        font-size: 13px;
+        color: #6c757d;
+        font-family: 'SF Mono', Monaco, monospace;
+      }
+
+      .preview-iframe-wrap {
+        width: 100%;
+        height: 340px;
+        background: #000a12;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .preview-iframe-wrap iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+
+      /* --- Section 2: Live A/B Test --- */
+      .live-section {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 20px;
+        margin-bottom: 32px;
+      }
+
+      .live-iframe-card {
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+
+      .live-iframe-card-header {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #f0f2f5;
+      }
+
+      .live-iframe-card-header .label {
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      .live-iframe-wrap {
+        width: 100%;
+        height: 440px;
+        background: #000a12;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .live-iframe-wrap iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+
+      .info-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .info-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+
+      .info-card h3 {
+        font-size: 13px;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+      }
+
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        font-size: 14px;
+      }
+
+      .info-row .info-label {
+        color: #6c757d;
+      }
+
+      .info-row .info-value {
+        font-weight: 600;
+        font-family: 'SF Mono', Monaco, monospace;
+        font-size: 13px;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        width: 100%;
+      }
+
+      .btn-reset {
+        background: #fee2e2;
+        color: #dc2626;
+      }
+
+      .btn-reset:hover {
+        background: #fecaca;
+      }
+
+      .btn-spin {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+
+      .btn-spin:hover {
+        background: #bfdbfe;
+      }
+
+      .btn-spin:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .distribution-bar {
+        display: flex;
+        height: 32px;
+        border-radius: 8px;
+        overflow: hidden;
+        margin: 12px 0 8px;
+      }
+
+      .distribution-bar .bar-a {
+        background: #3b82f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        transition: width 0.3s ease;
+        min-width: 0;
+      }
+
+      .distribution-bar .bar-b {
+        background: #ec4899;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        transition: width 0.3s ease;
+        min-width: 0;
+      }
+
+      .distribution-bar .bar-empty {
+        background: #e5e7eb;
+        flex: 1;
+      }
+
+      .distribution-legend {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: #6c757d;
+      }
+
+      .distribution-legend strong {
+        color: #1a1a2e;
+      }
+
+      /* --- Section 3: Events Log --- */
+      .events-card {
+        background: #1e1e2e;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+
+      .events-card-header {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #2a2a3e;
+      }
+
+      .events-card-header .label {
+        font-weight: 700;
+        font-size: 14px;
+        color: #e2e8f0;
+      }
+
+      .btn-clear {
+        padding: 6px 14px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.1);
+        color: #94a3b8;
+        transition: all 0.15s ease;
+      }
+
+      .btn-clear:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #e2e8f0;
+      }
+
+      .events-log {
+        padding: 16px;
+        max-height: 260px;
+        overflow-y: auto;
+        font-family: 'SF Mono', Monaco, Consolas, monospace;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .events-log:empty::before {
+        content: 'Очікування подій... Натисніть "Запустити спін" для генерації подій.';
+        color: #4a5568;
+        font-style: italic;
+      }
+
+      .event-entry {
+        padding: 8px 12px;
+        margin-bottom: 6px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.04);
+        border-left: 3px solid transparent;
+      }
+
+      .event-entry .event-name {
+        color: #a78bfa;
+        font-weight: 600;
+      }
+
+      .event-entry .event-time {
+        color: #4a5568;
+        margin-right: 8px;
+      }
+
+      .event-entry .event-param {
+        color: #94a3b8;
+      }
+
+      .event-entry .event-param .ab-param {
+        color: #34d399;
+        font-weight: 600;
+      }
+
+      .event-entry.event-view {
+        border-left-color: #3b82f6;
+      }
+
+      .event-entry.event-spin {
+        border-left-color: #f59e0b;
+      }
+
+      .event-entry.event-complete {
+        border-left-color: #10b981;
+      }
+
+      .event-entry.event-ready {
+        border-left-color: #6366f1;
+      }
+
+      .buttons-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      .hint {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 8px;
+        line-height: 1.5;
+      }
+
+      .ga-link {
+        margin-top: 12px;
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        font-size: 13px;
+        color: #6c757d;
+      }
+
+      .ga-link a {
+        color: #1d4ed8;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .ga-link a:hover {
+        text-decoration: underline;
+      }
+
+      /* --- Simulation Toggle --- */
+      .simulation-toggle-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 22px;
+        flex-shrink: 0;
+      }
+
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: #e5e7eb;
+        border-radius: 22px;
+        transition: 0.2s;
+      }
+
+      .toggle-slider:before {
+        content: '';
+        position: absolute;
+        height: 16px;
+        width: 16px;
+        left: 3px;
+        bottom: 3px;
+        background: #fff;
+        border-radius: 50%;
+        transition: 0.2s;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      }
+
+      .toggle-switch input:checked + .toggle-slider {
+        background: #6366f1;
+      }
+
+      .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(18px);
+      }
+
+      .toggle-label-text {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+      }
+
+      /* --- Simulation Panel --- */
+      .simulation-panel .sim-hint {
+        font-size: 12px;
+        color: #6c757d;
+        margin-bottom: 10px;
+        line-height: 1.5;
+      }
+
+      .users-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      .users-table th {
+        text-align: left;
+        padding: 6px 8px;
+        color: #6c757d;
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        border-bottom: 1px solid #f0f2f5;
+      }
+
+      .users-table td {
+        padding: 7px 8px;
+        border-bottom: 1px solid #f9fafb;
+        font-family: 'SF Mono', Monaco, monospace;
+        vertical-align: middle;
+      }
+
+      .users-table tr.active-user td {
+        background: #eff6ff;
+      }
+
+      .users-table tr.active-user td:first-child {
+        border-left: 3px solid #6366f1;
+        padding-left: 5px;
+      }
+
+      .btn-select-user {
+        padding: 3px 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background: #fff;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        color: #374151;
+        transition: all 0.15s ease;
+      }
+
+      .btn-select-user:hover {
+        background: #6366f1;
+        border-color: #6366f1;
+        color: #fff;
+      }
+
+      .btn-select-user.active {
+        background: #6366f1;
+        border-color: #6366f1;
+        color: #fff;
+      }
+
+      @media (max-width: 900px) {
+        .previews-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .live-section {
+          grid-template-columns: 1fr;
+        }
+
+        .config-bar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="page-container">
+    <div class="page-header">
+      <h1>A/B Testing Dashboard</h1>
+      <p>
+        Демо-сторінка для тестування та візуалізації A/B тестів лутбоксів
+      </p>
+    </div>
+
+    <!-- Config Bar -->
+    <div class="config-bar" id="configBar">
+      <div class="config-item">
+        <span class="config-label">Тест:</span>
+        <span class="config-value" id="cfgTestId">—</span>
+      </div>
+      <div class="config-item">
+        <span class="config-label">Проект:</span>
+        <span class="config-value" id="cfgProject">rocket</span>
+      </div>
+      <div class="config-item">
+        <span class="config-label">Варіант A:</span>
+        <span class="badge badge-a" id="cfgVariantA">—</span>
+      </div>
+      <div class="config-item">
+        <span class="config-label">Варіант B:</span>
+        <span class="badge badge-b" id="cfgVariantB">—</span>
+      </div>
+    </div>
+
+    <!-- Section 1: Previews -->
+    <div class="section-title">
+      <span class="section-number">1</span>
+      Попередній перегляд варіантів
+    </div>
+
+    <div class="previews-grid">
+      <div class="preview-card">
+        <div class="preview-card-header">
+          <span class="variant-label"><span class="badge badge-a">A</span></span>
+          <span class="theme-name" id="previewNameA">—</span>
+        </div>
+        <div class="preview-iframe-wrap">
+          <iframe id="previewFrameA" src=""></iframe>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card-header">
+          <span class="variant-label"><span class="badge badge-b">B</span></span>
+          <span class="theme-name" id="previewNameB">—</span>
+        </div>
+        <div class="preview-iframe-wrap">
+          <iframe id="previewFrameB" src=""></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: User Simulation -->
+    <div class="section-title">
+      <span class="section-number">2</span>
+      Симуляція реальних user_id
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+        <label class="toggle-switch">
+          <input type="checkbox" id="toggleSimulation" onchange="toggleSimulationMode()" />
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="toggle-label-text">Увімкнути</span>
+      </div>
+    </div>
+
+    <div class="simulation-panel" id="simulationPanel" style="display:none; margin-bottom: 32px;">
+      <div class="info-card">
+        <p class="sim-hint" style="margin-bottom: 16px;">
+          Симулює ситуацію, коли різні реальні користувачі заходять на сайт. Кнопка "Скинути користувача" циклічно перебирає наступний user_id з масиву нижче. Варіант A/B визначається автоматично за хешем ID — так само, як у bootstrap.js.
+        </p>
+        <table class="users-table" id="usersTable">
+          <thead>
+            <tr>
+              <th>user_id</th>
+              <th>Варіант (A/B)</th>
+              <th>Дія</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Section 3: Live A/B Test -->
+    <div class="section-title">
+      <span class="section-number">3</span>
+      Живий A/B тест
+    </div>
+
+    <div class="live-section">
+      <div class="live-iframe-card">
+        <div class="live-iframe-card-header">
+          <span class="label">Реальний A/B розподіл (без ?style=)</span>
+          <span class="badge" id="liveVariantBadge">—</span>
+        </div>
+        <div class="live-iframe-wrap">
+          <iframe id="liveFrame" src=""></iframe>
+        </div>
+      </div>
+
+      <div class="info-panel">
+        <div class="info-card">
+          <h3>Поточний користувач</h3>
+          <div class="info-row">
+            <span class="info-label">User ID</span>
+            <span class="info-value" id="infoUserId" title="">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Варіант</span>
+            <span class="info-value" id="infoVariant">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Тема</span>
+            <span class="info-value" id="infoTheme">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Test ID</span>
+            <span class="info-value" id="infoTestId">—</span>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <h3>Розподіл після скидань</h3>
+          <div class="distribution-bar" id="distBar">
+            <div class="bar-empty"></div>
+          </div>
+          <div class="distribution-legend">
+            <span><strong id="distACount">0</strong> Variant A</span>
+            <span><strong id="distBCount">0</strong> Variant B</span>
+          </div>
+          <p class="hint">
+            Натисніть "Скинути користувача" кілька разів, щоб побачити розподіл ~50/50
+          </p>
+        </div>
+
+        <div class="info-card">
+          <h3>Дії</h3>
+          <div class="buttons-row">
+            <button class="btn btn-spin" id="btnSpin" onclick="startLiveSpin()">
+              Запустити спін
+            </button>
+          </div>
+          <div style="height: 8px"></div>
+          <button class="btn btn-reset" id="btnResetUser" onclick="resetUser()">
+            Скинути користувача
+          </button>
+          <p class="hint" id="hintResetUser">
+            В режимі симуляції — перехід до наступного user_id з масиву. Без симуляції — видаляє ab_user_id з localStorage
+          </p>
+          <div style="height: 8px"></div>
+          <button class="btn btn-reset" onclick="resetAll()">
+            Скинути все (для демо)
+          </button>
+          <p class="hint">
+            Повне скидання: обнуляє лічильник розподілу, очищує лог подій та перезавантажує iframe
+          </p>
+        </div>
+
+        <div class="ga-link">
+          Перевірка в GA4:
+          <a href="https://analytics.google.com/" target="_blank">
+            Google Analytics
+          </a>
+          &rarr; Realtime &rarr; шукайте події з параметром <code>ab_variant</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Events Log -->
+    <div class="section-title">
+      <span class="section-number">4</span>
+      Аналітичні події
+    </div>
+
+    <div class="events-card">
+      <div class="events-card-header">
+        <span class="label">Event Log</span>
+        <button class="btn-clear" onclick="clearEvents()">Очистити</button>
+      </div>
+      <div class="events-log" id="eventsLog"></div>
+    </div>
+
+    </div>
+
+    <script>
+      var PROJECT = 'rocket'
+      var SECTORS = '500 USD;1,000 USD;10 FS;20 FS;35 FS;25 USD;100 USD;250 USD'
+      var SECTORS_TYPE = 'Bonus Prize;Bonus Prize;Free Spins;Free Spins;Free Spins;Bonus Prize;Bonus Prize;Bonus Prize'
+
+      var distribution = { A: 0, B: 0 }
+      var currentVariant = null
+      var isSpinning = false
+      var liveReady = false
+
+      // Simulation mode
+      var MOCK_USERS = [
+        'user_001', 'user_002', 'user_003', 'user_004', 'user_005',
+        'user_006', 'user_007', 'user_008', 'user_009', 'user_010',
+      ]
+      var mockUserIndex = 0
+      var simulationMode = false
+      var activeSimUserId = null
+
+      var liveFrame = document.getElementById('liveFrame')
+      var previewFrameA = document.getElementById('previewFrameA')
+      var previewFrameB = document.getElementById('previewFrameB')
+
+      function buildUrl(params) {
+        var url = new URL('./index.html', window.location.href)
+        Object.keys(params).forEach(function (key) {
+          if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+            url.searchParams.set(key, params[key])
+          }
+        })
+        return url.toString()
+      }
+
+      function readConfig() {
+        try {
+          var cfg = liveFrame.contentWindow.THEMES_CONFIG
+          if (!cfg || !cfg.abTests || !cfg.abTests[PROJECT]) return null
+          return cfg.abTests[PROJECT]
+        } catch (e) {
+          return null
+        }
+      }
+
+      function initPreviews(config) {
+        if (!config) return
+
+        var varA = config.variants[0]
+        var varB = config.variants[1]
+
+        document.getElementById('cfgTestId').textContent = config.testId
+        document.getElementById('cfgVariantA').textContent = varA.id + ' — ' + varA.theme + ' (' + varA.weight + '%)'
+        document.getElementById('cfgVariantB').textContent = varB.id + ' — ' + varB.theme + ' (' + varB.weight + '%)'
+        document.getElementById('previewNameA').textContent = varA.theme
+        document.getElementById('previewNameB').textContent = varB.theme
+
+        previewFrameA.src = buildUrl({ project: PROJECT, style: varA.theme, sectors: SECTORS, sectors_type: SECTORS_TYPE, no_analytics: '1' })
+        previewFrameB.src = buildUrl({ project: PROJECT, style: varB.theme, sectors: SECTORS, sectors_type: SECTORS_TYPE, no_analytics: '1' })
+      }
+
+      function readLiveState() {
+        try {
+          var theme = liveFrame.contentWindow.currentTheme
+          if (!theme) return
+
+          var userId = localStorage.getItem('ab_user_id') || '—'
+          var ab = theme.abTest
+
+          document.getElementById('infoUserId').textContent = userId.substring(0, 18) + '...'
+          document.getElementById('infoUserId').title = userId
+
+          if (ab) {
+            currentVariant = ab.variantId
+            document.getElementById('infoVariant').textContent = ab.variantId
+            document.getElementById('infoTheme').textContent = theme.name
+            document.getElementById('infoTestId').textContent = ab.testId
+
+            var badge = document.getElementById('liveVariantBadge')
+            badge.textContent = 'Variant ' + ab.variantId
+            badge.className = 'badge badge-' + ab.variantId.toLowerCase()
+
+            distribution[ab.variantId]++
+            updateDistribution()
+
+            logEvent('ready', 'Widget Loaded', {
+              theme: theme.name,
+              ab_test_id: ab.testId,
+              ab_variant: ab.variantId,
+            })
+
+            logEvent('view', 'Lootbox View', {
+              theme: theme.name,
+              ab_test_id: ab.testId,
+              ab_variant: ab.variantId,
+            })
+          } else {
+            document.getElementById('infoVariant').textContent = 'Без A/B'
+            document.getElementById('infoTheme').textContent = theme.name
+            document.getElementById('infoTestId').textContent = '—'
+          }
+        } catch (e) {
+          // iframe ще не готовий
+        }
+      }
+
+      function updateDistribution() {
+        var total = distribution.A + distribution.B
+        if (total === 0) return
+
+        var pctA = Math.round((distribution.A / total) * 100)
+        var pctB = 100 - pctA
+
+        var bar = document.getElementById('distBar')
+        bar.innerHTML = ''
+
+        if (distribution.A > 0) {
+          var barA = document.createElement('div')
+          barA.className = 'bar-a'
+          barA.style.width = pctA + '%'
+          barA.textContent = pctA + '%'
+          bar.appendChild(barA)
+        }
+
+        if (distribution.B > 0) {
+          var barB = document.createElement('div')
+          barB.className = 'bar-b'
+          barB.style.width = pctB + '%'
+          barB.textContent = pctB + '%'
+          bar.appendChild(barB)
+        }
+
+        document.getElementById('distACount').textContent = distribution.A
+        document.getElementById('distBCount').textContent = distribution.B
+      }
+
+      function resetUser() {
+        if (simulationMode) {
+          var userId = MOCK_USERS[mockUserIndex % MOCK_USERS.length]
+          mockUserIndex++
+          activeSimUserId = userId
+          localStorage.setItem('ab_user_id', userId)
+          renderUsersTable()
+          logEvent('ready', 'User Reset (Simulation)', { user_id: userId })
+        } else {
+          localStorage.removeItem('ab_user_id')
+          logEvent('ready', 'User Reset', { action: 'localStorage.removeItem("ab_user_id")' })
+        }
+        isSpinning = false
+        liveReady = false
+        updateSpinButton()
+        liveFrame.src = buildUrl({
+          project: PROJECT,
+          sectors: SECTORS,
+          sectors_type: SECTORS_TYPE,
+          ab: 'true',
+          ...(simulationMode && activeSimUserId ? { user_id: activeSimUserId } : {}),
+        })
+      }
+
+      function resetAll() {
+        localStorage.removeItem('ab_user_id')
+        distribution = { A: 0, B: 0 }
+        currentVariant = null
+        isSpinning = false
+        liveReady = false
+
+        document.getElementById('distACount').textContent = '0'
+        document.getElementById('distBCount').textContent = '0'
+        document.getElementById('distBar').innerHTML = '<div class="bar-empty"></div>'
+        document.getElementById('infoUserId').textContent = '—'
+        document.getElementById('infoVariant').textContent = '—'
+        document.getElementById('infoTheme').textContent = '—'
+        document.getElementById('infoTestId').textContent = '—'
+        document.getElementById('liveVariantBadge').textContent = '—'
+        document.getElementById('liveVariantBadge').className = 'badge'
+
+        clearEvents()
+        updateSpinButton()
+        liveFrame.src = buildUrl({ project: PROJECT, sectors: SECTORS, sectors_type: SECTORS_TYPE, ab: 'true' })
+      }
+
+      function startLiveSpin() {
+        if (isSpinning || !liveReady) return
+        isSpinning = true
+        updateSpinButton()
+
+        liveFrame.contentWindow.postMessage({ type: 'startSpin' }, '*')
+
+        var ab = liveFrame.contentWindow.currentTheme?.abTest
+        logEvent('spin', 'Spin Started', {
+          ab_test_id: ab ? ab.testId : '—',
+          ab_variant: ab ? ab.variantId : '—',
+        })
+
+        setTimeout(function () {
+          var sector = Math.floor(Math.random() * 8)
+          liveFrame.contentWindow.postMessage({ type: 'winSector', data: sector }, '*')
+        }, 1500)
+      }
+
+      function updateSpinButton() {
+        var btn = document.getElementById('btnSpin')
+        btn.disabled = isSpinning || !liveReady
+      }
+
+      window.addEventListener('message', function (event) {
+        if (!event.data || typeof event.data !== 'object') return
+        if (event.source !== liveFrame.contentWindow) return
+
+        if (event.data.type === 'lootboxReady') {
+          liveReady = true
+          updateSpinButton()
+          setTimeout(readLiveState, 300)
+        }
+
+        if (event.data.type === 'spinEnd') {
+          isSpinning = false
+          updateSpinButton()
+
+          var ab = null
+          try {
+            ab = liveFrame.contentWindow.currentTheme?.abTest
+          } catch (e) {}
+
+          logEvent('complete', 'Spin Ended', {
+            prize: event.data.data?.prize || '—',
+            ab_test_id: ab ? ab.testId : '—',
+            ab_variant: ab ? ab.variantId : '—',
+          })
+        }
+      })
+
+      function logEvent(type, name, params) {
+        var log = document.getElementById('eventsLog')
+        var entry = document.createElement('div')
+        entry.className = 'event-entry event-' + type
+
+        var time = new Date().toLocaleTimeString()
+        var paramsHtml = Object.keys(params)
+          .map(function (key) {
+            var isAB = key === 'ab_test_id' || key === 'ab_variant'
+            var cls = isAB ? 'ab-param' : ''
+            return '<span class="' + cls + '">' + key + '=' + params[key] + '</span>'
+          })
+          .join(', ')
+
+        entry.innerHTML =
+          '<span class="event-time">' +
+          time +
+          '</span>' +
+          '<span class="event-name">' +
+          name +
+          '</span> ' +
+          '<span class="event-param">{ ' +
+          paramsHtml +
+          ' }</span>'
+
+        log.appendChild(entry)
+        log.scrollTop = log.scrollHeight
+      }
+
+      function clearEvents() {
+        document.getElementById('eventsLog').innerHTML = ''
+      }
+
+      // FNV-1a hash — репліка логіки з bootstrap.js
+      function fnv1aHash(str) {
+        var hash = 2166136261
+        for (var i = 0; i < str.length; i++) {
+          hash ^= str.charCodeAt(i)
+          hash = (hash * 16777619) >>> 0
+        }
+        return hash
+      }
+
+      function computeVariant(userId, config) {
+        if (!config) return '?'
+        var hash = fnv1aHash(userId + ':' + config.testId)
+        var value = hash % 100
+        var cumulative = 0
+        for (var i = 0; i < config.variants.length; i++) {
+          cumulative += config.variants[i].weight
+          if (value < cumulative) return config.variants[i].id
+        }
+        return config.variants[config.variants.length - 1].id
+      }
+
+      function renderUsersTable() {
+        var config = readConfig()
+        var tbody = document.getElementById('usersTableBody')
+        tbody.innerHTML = ''
+        MOCK_USERS.forEach(function (userId) {
+          var variant = computeVariant(userId, config)
+          var isActive = userId === activeSimUserId
+          var tr = document.createElement('tr')
+          if (isActive) tr.className = 'active-user'
+          tr.innerHTML =
+            '<td>' + userId + '</td>' +
+            '<td><span class="badge badge-' + variant.toLowerCase() + '">' + variant + '</span></td>' +
+            '<td><button class="btn-select-user' + (isActive ? ' active' : '') + '" onclick="selectMockUser(\'' + userId + '\')">' +
+            (isActive ? '✓ Активний' : 'Вибрати') + '</button></td>'
+          tbody.appendChild(tr)
+        })
+      }
+
+      function selectMockUser(userId) {
+        activeSimUserId = userId
+        mockUserIndex = (MOCK_USERS.indexOf(userId) + 1) % MOCK_USERS.length
+        localStorage.setItem('ab_user_id', userId)
+        renderUsersTable()
+        isSpinning = false
+        liveReady = false
+        updateSpinButton()
+        liveFrame.src = buildUrl({
+          project: PROJECT,
+          sectors: SECTORS,
+          sectors_type: SECTORS_TYPE,
+          ab: 'true',
+          user_id: userId,
+        })
+        logEvent('ready', 'User Selected (Simulation)', { user_id: userId })
+      }
+
+      function toggleSimulationMode() {
+        simulationMode = document.getElementById('toggleSimulation').checked
+        var panel = document.getElementById('simulationPanel')
+        if (simulationMode) {
+          panel.style.display = 'block'
+          mockUserIndex = 0
+          activeSimUserId = null
+          renderUsersTable()
+        } else {
+          panel.style.display = 'none'
+          activeSimUserId = null
+          localStorage.removeItem('ab_user_id')
+        }
+      }
+
+      // Init
+      liveFrame.src = buildUrl({ project: PROJECT, sectors: SECTORS, sectors_type: SECTORS_TYPE, ab: 'true' })
+
+      liveFrame.addEventListener('load', function () {
+        setTimeout(function () {
+          var config = readConfig()
+          if (config) {
+            initPreviews(config)
+            if (simulationMode) renderUsersTable()
+          }
+        }, 500)
+      })
+    </script>
+  </body>
+</html>
