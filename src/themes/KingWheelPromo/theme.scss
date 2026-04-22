@@ -131,10 +131,11 @@
 
 .center-frame {
   position: absolute;
-  top: 36.5%;
+  top: 35.5%;
   left: 50%;
   z-index: 5;
-  height: 22.5%;
+  height: 24.5%;
+  width: 24.5%;
   overflow: hidden;
   border-radius: 100%;
   transform: translateX(-50%);
@@ -170,7 +171,7 @@
 
 .purple-wave {
   position: absolute;
-  top: 9.5%;
+  top: 12.5%;
   left: 50%;
   z-index: 15;
   transform: translateX(-50%);
