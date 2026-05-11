@@ -95,6 +95,18 @@
     <img :src="themeImages.pointerShadow" class="wheel-pointer-shadow" alt="" />
     <img :src="themeImages.wheelpointer" class="wheel-pointer" alt="" />
     <img :src="themeImages.center" class="wheel-center" alt="" />
+    <!--
+      Літнє промо KingWheel: анімація овечки поверх центру колеса лише під час win-стану.
+      Прив'язано до showWinAnimation, тому зникає одночасно з win-frame/winanimation
+      (≈ timeToPopup = 9с, ~4 цикли SVG-анімації 2.15с — без правок самого SVG).
+      isPromoActive виставляється у bootstrap.js (window.currentTheme.isPromoActive).
+    -->
+    <img
+      v-if="isPromoActive && showWinAnimation"
+      :src="themeImages['promo-center-anim']"
+      class="wheel-center-sheep"
+      alt=""
+    />
     <div class="center-frame">
       <img
         :src="themeImages.centerbg"
@@ -227,6 +239,10 @@ const themeImages = window.currentTheme?.images ?? {}
 
 // Активність лутбокса з URL параметрів
 const active = window.currentTheme?.isActive ?? true
+
+// Сезонне промо KingWheel — обчислюється у bootstrap.js (theme.promoPeriod або ?promo=force/disable).
+// Тут потрібно лише для overlay овечки в win-стані; решта (стилі/ассети) уже підмінена ззовні.
+const isPromoActive = window.currentTheme?.isPromoActive ?? false
 
 // Парсинг секторів з URL параметрів з валідацією
 // Виконується один раз при ініціалізації для оптимізації продуктивності

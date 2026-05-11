@@ -450,9 +450,6 @@
             <option value="KingWheel" data-project="king" selected>
               KingWheel (King)
             </option>
-            <option value="KingWheelPromo" data-project="king">
-              KingWheelPromo (King)
-            </option>
             <option value="ThorWheel" data-project="thor">
               ThorWheel (Thor)
             </option>
@@ -508,6 +505,28 @@
               style="display: inline-block"
             />
             fps
+          </label>
+        </div>
+
+        <div class="control-group checkbox">
+          <label class="label-container">
+            <input
+              type="checkbox"
+              id="forcePromoCheckbox"
+              style="display: inline-block"
+            />
+            Force promo (QA, ?promo=force)
+          </label>
+        </div>
+
+        <div class="control-group checkbox">
+          <label class="label-container">
+            <input
+              type="checkbox"
+              id="disablePromoCheckbox"
+              style="display: inline-block"
+            />
+            Disable promo (QA, ?promo=disable)
           </label>
         </div>
 
@@ -687,6 +706,8 @@
         const customUrlInput = document.getElementById('customUrl')
         const activeCheckbox = document.getElementById('activeCheckbox')
         const fpsCheckbox = document.getElementById('fpsCheckbox')
+        const forcePromoCheckbox = document.getElementById('forcePromoCheckbox')
+        const disablePromoCheckbox = document.getElementById('disablePromoCheckbox')
         const vipLevelInput = document.getElementById('vipLevel')
         const clearLogBtn = document.querySelector(
           'button[onclick="clearLog()"]'
@@ -709,6 +730,8 @@
         if (customUrlInput) customUrlInput.contentEditable = !isBlocked
         activeCheckbox.disabled = isSpinning
         if (fpsCheckbox) fpsCheckbox.disabled = isSpinning
+        if (forcePromoCheckbox) forcePromoCheckbox.disabled = isSpinning
+        if (disablePromoCheckbox) disablePromoCheckbox.disabled = isSpinning
         if (vipLevelInput) vipLevelInput.disabled = isSpinning
 
         if (sectorsInput) {
@@ -757,6 +780,12 @@
           currentParams.vip_level = parseInt(
             url.searchParams.get('vip_level') || '0'
           )
+          const promoParam = url.searchParams.get('promo')
+          if (promoParam === 'force' || promoParam === 'disable') {
+            currentParams.promo = promoParam
+          } else {
+            delete currentParams.promo
+          }
 
           updateFormFields()
           widgetReady = false
@@ -771,6 +800,8 @@
         const sectorsTypeElement = document.getElementById('sectorsType')
         const activeCheckbox = document.getElementById('activeCheckbox')
         const fpsCheckbox = document.getElementById('fpsCheckbox')
+        const forcePromoCheckbox = document.getElementById('forcePromoCheckbox')
+        const disablePromoCheckbox = document.getElementById('disablePromoCheckbox')
         const vipLevelInput = document.getElementById('vipLevel')
 
         if (projectSelect) {
@@ -790,6 +821,12 @@
         }
         if (fpsCheckbox) {
           fpsCheckbox.checked = currentParams.fps
+        }
+        if (forcePromoCheckbox) {
+          forcePromoCheckbox.checked = currentParams.promo === 'force'
+        }
+        if (disablePromoCheckbox) {
+          disablePromoCheckbox.checked = currentParams.promo === 'disable'
         }
         if (vipLevelInput) {
           vipLevelInput.value = currentParams.vip_level
@@ -820,6 +857,8 @@
         const sectorsTypeElement = document.getElementById('sectorsType')
         const activeCheckbox = document.getElementById('activeCheckbox')
         const fpsCheckbox = document.getElementById('fpsCheckbox')
+        const forcePromoCheckbox = document.getElementById('forcePromoCheckbox')
+        const disablePromoCheckbox = document.getElementById('disablePromoCheckbox')
         const vipLevelInput = document.getElementById('vipLevel')
 
         currentParams.project = projectSelect ? projectSelect.value : ''
@@ -833,6 +872,13 @@
         currentParams.vip_level = vipLevelInput
           ? parseInt(vipLevelInput.value) || 0
           : 0
+        if (disablePromoCheckbox && disablePromoCheckbox.checked) {
+          currentParams.promo = 'disable'
+        } else if (forcePromoCheckbox && forcePromoCheckbox.checked) {
+          currentParams.promo = 'force'
+        } else {
+          delete currentParams.promo
+        }
 
         updateWidget()
       }
@@ -991,6 +1037,18 @@
       document
         .getElementById('fpsCheckbox')
         .addEventListener('change', updateParams)
+      document.getElementById('forcePromoCheckbox').addEventListener('change', function () {
+        if (this.checked) {
+          document.getElementById('disablePromoCheckbox').checked = false
+        }
+        updateParams()
+      })
+      document.getElementById('disablePromoCheckbox').addEventListener('change', function () {
+        if (this.checked) {
+          document.getElementById('forcePromoCheckbox').checked = false
+        }
+        updateParams()
+      })
       document
         .getElementById('vipLevel')
         .addEventListener('input', updateParams)

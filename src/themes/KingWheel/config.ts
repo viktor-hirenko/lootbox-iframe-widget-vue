@@ -15,6 +15,11 @@ export const config: ThemeConfig = {
     numberOfSpins: 1,
     winSection: 0,
   },
+  /** Літнє промо: автоматичний сезонний дизайн (див. bootstrap.js + styles/_promo.scss) */
+  promoPeriod: {
+    start: '2026-05-15T10:00:00+03:00',
+    end: '2026-05-29T18:00:00+03:00',
+  },
   // Custom font sizes for KingWheel theme (adjust as needed)
   fontSizes: {
     sum: {

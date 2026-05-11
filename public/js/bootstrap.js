@@ -18,6 +18,11 @@
   function readUrlParams() {
     const searchParams = new URLSearchParams(location.search)
     const activeParam = searchParams.get('active')
+    // ?promo=force|disable — QA-override сезонного промо (KingWheel).
+    // Дозволяє перевірити обидва стани без зміни системної дати/конфігу.
+    // Будь-яке інше значення → null → працює дата з theme.promoPeriod.
+    const promoRaw = searchParams.get('promo')
+    const promo = promoRaw === 'force' || promoRaw === 'disable' ? promoRaw : null
     return {
       themeName: searchParams.get('style') || null,
       project: searchParams.get('project') || null,
@@ -26,6 +31,7 @@
       active: activeParam !== 'false', // true за замовчуванням, false тільки якщо явно вказано
       userId: searchParams.get('user_id') || null,
       ab: searchParams.get('ab') === 'true',
+      promo, // 'force' | 'disable' | null — override промо, див. isPromoActive()
     }
   }
 
@@ -163,22 +169,124 @@
     // console.log('[bootstrap] Всі зображення завантажені')
   }
 
+  /** Ключ зображення без розширення з URL (basename → ключ для мапи images) */
+  function imageKeyFromUrl(url) {
+    const base = (url.split('/').pop() || '').trim()
+    if (!base) return ''
+    return base.replace(/\.[^.]+$/, '')
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Сезонне промо (KingWheel — "Літнє промо")
+  //
+  // Ідея: одна тема (KingWheel) має два візуальні стани — класика та промо.
+  // У period (theme.promoPeriod) на колесі автоматично з'являється літній
+  // дизайн + анімація овечки в момент виграшу. Поза періодом — класика.
+  // Жодних змін на батьківському сайті чи редеплою не треба: при кожному
+  // завантаженні iframe bootstrap.js перераховує isPromoActive і:
+  //   1) виставляє/знімає <html data-king-promo="active"> → стилі _promo.scss
+  //   2) підмінює мапу зображень promo-X → X → Vue не знає про режим
+  //   3) кладе isPromoActive у window.currentTheme → App.vue вмикає овечку
+  //
+  // Хардкод 'KingWheel' навмисний: промо запитували саме під цю тему. Якщо
+  // знадобиться промо для іншої теми — узагальнити через флаг у config.ts
+  // (напр. theme.promo.enabled) і свій data-attribute / partial.
+  // ──────────────────────────────────────────────────────────────────────────
+
   /**
-   * Побудувати мапу зображень для Vue компонентів
+   * Чи активне сезонне промо KingWheel.
    *
-   * Перетворює список URL зображень у зручну мапу:
+   * Пріоритети:
+   *   1. ?promo=force   → завжди true  (QA: перевірити промо поза датами)
+   *   2. ?promo=disable → завжди false (QA: класика всередині дат)
+   *   3. promoPeriod з config.ts → true, якщо Date.now() ∈ [start, end]
+   *
+   * Інші теми завжди отримують false — це навмисно (див. блок-коментар вище).
+   */
+  function isPromoActive(theme, params) {
+    if (!theme || theme.name !== 'KingWheel') return false
+    if (params.promo === 'force') return true
+    if (params.promo === 'disable') return false
+    const p = theme.promoPeriod
+    if (!p || typeof p.start !== 'string' || typeof p.end !== 'string') return false
+    const start = Date.parse(p.start)
+    const end = Date.parse(p.end)
+    if (Number.isNaN(start) || Number.isNaN(end)) return false
+    const now = Date.now()
+    return now >= start && now <= end
+  }
+
+  /**
+   * Список зображень для критичного прелоаду (запобігає FOUC).
+   *
+   * winanimation завжди виключаємо — вона важка і завантажується у фоні
+   * вже після появи колеса (див. useWinAnimationPreloader.ts).
+   *
+   * Поза промо: викидаємо ВСІ promo-* (зайвий трафік на ~500 KB).
+   * У промо: тягнемо тільки promo-* + ті класичні, у яких немає promo-аналога,
+   * щоб не качати парами одне і те саме (наприклад, center.webp і
+   * promo-center.webp — у промо потрібен лише другий).
+   */
+  function pickPreloadImages(imageUrls, isPromo) {
+    let urls = (imageUrls || []).filter(u => !u.includes('winanimation'))
+    if (!isPromo) {
+      return urls.filter(u => {
+        const k = imageKeyFromUrl(u)
+        return !k.startsWith('promo-')
+      })
+    }
+    const promoOverrides = new Set()
+    for (const u of urls) {
+      const k = imageKeyFromUrl(u)
+      if (k.startsWith('promo-')) {
+        promoOverrides.add(k.replace(/^promo-/, ''))
+      }
+    }
+    return urls.filter(u => {
+      const k = imageKeyFromUrl(u)
+      if (k.startsWith('promo-')) return true
+      if (promoOverrides.has(k)) return false
+      return true
+    })
+  }
+
+  /**
+   * Побудувати мапу зображень для Vue компонентів.
+   *
    * Input:  ["themes/default/images/bg.webp", "themes/default/images/logo.svg"]
    * Output: { "bg": "themes/default/images/bg.webp", "logo": "themes/default/images/logo.svg" }
    *
-   * Це дозволяє Vue компонентам динамічно звертатися до зображень по імені:
-   * <img :src="currentTheme.images.bg" /> замість довгих URL
+   * Vue звертається до зображень по basename: <img :src="themeImages.bg" />
+   *
+   * Промо (isPromo=true): для кожного ключа promo-X записуємо його URL під
+   * ключем X, тож Vue без жодних умов отримує літню версію того самого
+   * зображення (center → promo-center.webp і т.д.) — без розгалуження логіки
+   * у шаблонах.
+   *
+   * ВИНЯТОК: promo-center-anim — це УНІКАЛЬНИЙ промо-асет (анімація овечки),
+   * у класики аналога нема. Якщо його теж "розпакувати" → з'явиться ключ
+   * "center-anim", якого ніхто не очікує, а App.vue все одно бере його під
+   * повним ім'ям themeImages['promo-center-anim']. Тому виключаємо.
+   * Аналогічно треба буде робити з будь-яким новим promo-only ассетом.
+   *
+   * @param {string[]} imageUrls
+   * @param {boolean} isPromo
    */
-  function buildImageMap(imageUrls) {
+  function buildImageMap(imageUrls, isPromo) {
     const map = {}
     for (const url of imageUrls || []) {
-      const base = (url.split('/').pop() || '').trim()
-      if (!base) continue
-      map[base.replace(/\.[^.]+$/, '')] = url
+      const key = imageKeyFromUrl(url)
+      if (!key) continue
+      map[key] = url
+    }
+    if (isPromo) {
+      for (const key of Object.keys(map)) {
+        // promo-only асети залишаємо тільки під promo-ключем — див. JSDoc вище
+        if (key.startsWith('promo-') && key !== 'promo-center-anim') {
+          const target = key.replace(/^promo-/, '')
+          map[target] = map[key]
+        }
+      }
     }
     return map
   }
@@ -258,13 +366,14 @@
   }
 
   /** Експорт рантайму теми для Vue */
-  function exposeThemeRuntime(theme, params, imagesMap, abResult) {
+  function exposeThemeRuntime(theme, params, imagesMap, abResult, isPromo) {
     window.currentTheme = {
       styleId: theme.styleId,
       name: theme.name,
       project: theme.project || null,
       isProjectDefault: theme.isProjectDefault || false,
       backgroundColor: theme.backgroundColor || null,
+      isPromoActive: !!isPromo,
       sectors: params.sectors,
       sectorsType: params.sectorsType,
       isActive: params.active,
@@ -311,12 +420,23 @@
 
   setThemeDataAttribute(selectedTheme)
 
+  // Промо-режим (KingWheel "Літнє промо"): обчислюємо ОДИН раз при ініціалізації.
+  // Атрибут на <html> керує промо-стилями (themes/KingWheel/styles/_promo.scss),
+  // а сам прапорець isPromo передається у buildImageMap/exposeThemeRuntime,
+  // щоб Vue (App.vue) теж знав про режим (для overlay овечки на win-стані).
+  const isPromo = isPromoActive(selectedTheme, urlParams)
+  if (isPromo) {
+    document.documentElement.setAttribute('data-king-promo', 'active')
+  } else {
+    document.documentElement.removeAttribute('data-king-promo')
+  }
+
   const cssReady = loadThemeStylesheet(selectedTheme)
-  // Виключаємо winanimation з початкового завантаження — вона завантажиться на фоні після появи колеса
-  const criticalImages = (selectedTheme.images || []).filter(url => !url.includes('winanimation'))
+  // Прелоад без winanimation і з урахуванням промо (див. pickPreloadImages)
+  const criticalImages = pickPreloadImages(selectedTheme.images, isPromo)
   await waitForAllImages(criticalImages, IMAGE_LOAD_TIMEOUT_MS)
   await cssReady
 
-  const imageMap = buildImageMap(selectedTheme.images)
-  exposeThemeRuntime(selectedTheme, urlParams, imageMap, abResult) // window.currentTheme = { ... }
+  const imageMap = buildImageMap(selectedTheme.images, isPromo)
+  exposeThemeRuntime(selectedTheme, urlParams, imageMap, abResult, isPromo) // window.currentTheme = { ... }
 })()

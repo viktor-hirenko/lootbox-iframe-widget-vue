@@ -1,0 +1,93 @@
+/* Літнє промо KingWheel — активується лише з [data-king-promo='active'] на <html> (bootstrap.js) */
+
+:root[data-king-promo='active'] {
+  .loot-box-spin-wheel-container {
+    &:before {
+      top: 50%;
+      left: 50%;
+      width: 85%;
+      height: 85%;
+      background-image: url('./images/promo-wheelframebg.webp');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: translate(-50%, -50%);
+    }
+
+    &:after {
+      content: '';
+      position: absolute;
+      top: 13.5%;
+      left: 15.8%;
+      z-index: 5;
+      width: 68%;
+      height: 68%;
+      background-image: url('./images/promo-sectorborder.webp');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      pointer-events: none;
+    }
+  }
+
+  .wheel-sectors-mask {
+    top: 14.5%;
+    left: 16.7%;
+    width: 66%;
+    height: 66%;
+  }
+
+  .wheel-pointer {
+    top: 8%;
+    width: 28%;
+  }
+
+  .wheel-center {
+    top: 36%;
+    width: 23%;
+  }
+
+  .center-frame {
+    top: 35.5%;
+    height: 24.5%;
+    width: 24.5%;
+  }
+
+  .center-bg {
+    display: none;
+  }
+
+  .purple-wave {
+    top: 12.5%;
+  }
+
+  .win-frame {
+    left: 49.5%;
+    width: 26vmin;
+  }
+
+  .lamps {
+    top: 0.2%;
+  }
+
+  .sector:nth-of-type(odd) .loot-box-prize-type {
+    fill: var(--color-white);
+  }
+
+  .sector:nth-of-type(even) .loot-box-prize-type {
+    fill: #4627ea;
+  }
+
+  /* Овця поверх центру під час win-анімації (див. App.vue) */
+  .wheel-center-sheep {
+    position: absolute;
+    top: 36.5%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 12;
+    width: 22%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    pointer-events: none;
+  }
+}

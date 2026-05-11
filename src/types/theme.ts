@@ -47,4 +47,6 @@ export interface ThemeConfig {
   }
   fontSizes?: FontSizesConfig
   backgroundColor?: string // Колір фону для теми (опціонально)
+  /** Опціональний період сезонного промо (ISO-8601 з offset) */
+  promoPeriod?: { start: string; end: string }
 }

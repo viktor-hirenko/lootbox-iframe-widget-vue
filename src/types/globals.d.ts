@@ -31,6 +31,7 @@ declare global {
           numberOfSpins: number
           winSection: number
         }
+        promoPeriod?: { start: string; end: string }
         images: string[]
       }>
       abTests?: Record<
@@ -62,6 +63,7 @@ declare global {
           sectorsType: string | null
           isActive: boolean
           userId: string | null
+          isPromoActive: boolean
           images: Record<string, string>
           timings: Record<string, number>
           logic: Record<string, unknown>

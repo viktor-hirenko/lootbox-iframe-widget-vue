@@ -58,6 +58,7 @@ export type ThemeConfig = {
   isProjectDefault: boolean
   timings: { spinDuration: number; timeToPopup: number; winAnimationOffset: number }
   logic: { numberOfSpins: number; winSection: number }
+  promoPeriod?: { start: string; end: string }
   fontSizes?: {
     sum: {
       short: string
@@ -143,6 +144,17 @@ function assertThemeConfig(cfg: any, themeId: string): asserts cfg is ThemeConfi
   if (typeof t.winAnimationOffset !== 'number') fail('timings.winAnimationOffset must be number')
   if (typeof l.numberOfSpins !== 'number') fail('logic.numberOfSpins must be number')
   if (typeof l.winSection !== 'number') fail('logic.winSection must be number')
+  if (cfg.promoPeriod !== undefined) {
+    if (!cfg.promoPeriod || typeof cfg.promoPeriod !== 'object') fail('"promoPeriod" must be an object when set')
+    const pp = cfg.promoPeriod as { start?: unknown; end?: unknown }
+    if (typeof pp.start !== 'string' || typeof pp.end !== 'string') {
+      fail('promoPeriod.start and promoPeriod.end must be strings')
+    }
+    const startStr = pp.start as string
+    const endStr = pp.end as string
+    if (Number.isNaN(Date.parse(startStr))) fail('promoPeriod.start must be a valid date string')
+    if (Number.isNaN(Date.parse(endStr))) fail('promoPeriod.end must be a valid date string')
+  }
 }
 
 /** Компіляція TypeScript конфігу в JavaScript через esbuild */
