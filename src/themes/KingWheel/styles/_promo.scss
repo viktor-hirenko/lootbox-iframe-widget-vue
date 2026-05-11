@@ -78,14 +78,15 @@
     fill: #4627ea;
   }
 
-  /* Овця поверх центру під час win-анімації (див. App.vue) */
+  /* Овця поверх центру під час win-анімації (див. App.vue).
+     Ширина/top збігаються з .wheel-center у цьому ж блоці — інакше оверлей на 1% вужчий і «диск» виглядає меншим. */
   .wheel-center-sheep {
     position: absolute;
-    top: 36.5%;
+    top: 36%;
     left: 50%;
     transform: translateX(-50%);
     z-index: 12;
-    width: 22%;
+    width: 23%;
     height: auto;
     aspect-ratio: 1 / 1;
     pointer-events: none;
