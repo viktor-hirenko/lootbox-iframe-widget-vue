@@ -508,6 +508,33 @@
           </label>
         </div>
 
+        <div class="control-group">
+          <small
+            style="
+              color: #6c757d;
+              font-size: 12px;
+              line-height: 1.5;
+              display: block;
+            "
+          >
+            <strong>Літнє промо (KingWheel)</strong>
+            <span style="display: block; margin-top: 6px">
+              <strong>Прод:</strong> параметр <code>promo</code> у URL не
+              потрібен — промо-скін увімкнеться сам, коли час потрапляє в
+              <code>promoPeriod</code> у конфігу теми </br> (<span
+                id="kingWheelPromoPeriodRange"
+                >…</span
+              >); </br>
+              поза інтервалом — звичайний вигляд.
+            </span>
+            <span style="display: block; margin-top: 6px">
+              <strong>Тест:</strong> чекбокси нижче додають у посилання
+              <code>?promo=force</code> (завжди промо) або
+              <code>?promo=disable</code> (завжди класика).
+            </span>
+          </small>
+        </div>
+
         <div class="control-group checkbox">
           <label class="label-container">
             <input
@@ -515,7 +542,7 @@
               id="forcePromoCheckbox"
               style="display: inline-block"
             />
-            Force promo (QA, ?promo=force)
+            force promo
           </label>
         </div>
 
@@ -526,7 +553,7 @@
               id="disablePromoCheckbox"
               style="display: inline-block"
             />
-            Disable promo (QA, ?promo=disable)
+            disable promo
           </label>
         </div>
 
@@ -634,7 +661,44 @@
       </div>
     </div>
 
+    <script src="./themes/themes-config.js"></script>
     <script>
+      ;(function fillKingWheelPromoPeriodFromRegistry() {
+        var span = document.getElementById('kingWheelPromoPeriodRange')
+        if (!span) return
+        var cfg =
+          typeof window.THEMES_CONFIG !== 'undefined'
+            ? window.THEMES_CONFIG
+            : null
+        if (!cfg || !Array.isArray(cfg.themes)) {
+          span.textContent = 'немає themes-config.js'
+          return
+        }
+        var theme = null
+        for (var i = 0; i < cfg.themes.length; i++) {
+          if (cfg.themes[i].id === 'KingWheel') {
+            theme = cfg.themes[i]
+            break
+          }
+        }
+        if (!theme || !theme.promoPeriod) {
+          span.textContent = 'немає promoPeriod'
+          return
+        }
+        var start = theme.promoPeriod.start
+        var end = theme.promoPeriod.end
+        if (typeof start !== 'string' || typeof end !== 'string') {
+          span.textContent = 'некоректний promoPeriod'
+          return
+        }
+        function esc(t) {
+          var d = document.createElement('div')
+          d.textContent = t
+          return d.innerHTML
+        }
+        span.innerHTML =
+          '<code>' + esc(start) + '</code> — <code>' + esc(end) + '</code>'
+      })()
       // Початкові параметри (для King проекту)
       let currentParams = {
         project: 'king',
@@ -707,7 +771,9 @@
         const activeCheckbox = document.getElementById('activeCheckbox')
         const fpsCheckbox = document.getElementById('fpsCheckbox')
         const forcePromoCheckbox = document.getElementById('forcePromoCheckbox')
-        const disablePromoCheckbox = document.getElementById('disablePromoCheckbox')
+        const disablePromoCheckbox = document.getElementById(
+          'disablePromoCheckbox'
+        )
         const vipLevelInput = document.getElementById('vipLevel')
         const clearLogBtn = document.querySelector(
           'button[onclick="clearLog()"]'
@@ -801,7 +867,9 @@
         const activeCheckbox = document.getElementById('activeCheckbox')
         const fpsCheckbox = document.getElementById('fpsCheckbox')
         const forcePromoCheckbox = document.getElementById('forcePromoCheckbox')
-        const disablePromoCheckbox = document.getElementById('disablePromoCheckbox')
+        const disablePromoCheckbox = document.getElementById(
+          'disablePromoCheckbox'
+        )
         const vipLevelInput = document.getElementById('vipLevel')
 
         if (projectSelect) {
@@ -858,7 +926,9 @@
         const activeCheckbox = document.getElementById('activeCheckbox')
         const fpsCheckbox = document.getElementById('fpsCheckbox')
         const forcePromoCheckbox = document.getElementById('forcePromoCheckbox')
-        const disablePromoCheckbox = document.getElementById('disablePromoCheckbox')
+        const disablePromoCheckbox = document.getElementById(
+          'disablePromoCheckbox'
+        )
         const vipLevelInput = document.getElementById('vipLevel')
 
         currentParams.project = projectSelect ? projectSelect.value : ''
@@ -1037,18 +1107,22 @@
       document
         .getElementById('fpsCheckbox')
         .addEventListener('change', updateParams)
-      document.getElementById('forcePromoCheckbox').addEventListener('change', function () {
-        if (this.checked) {
-          document.getElementById('disablePromoCheckbox').checked = false
-        }
-        updateParams()
-      })
-      document.getElementById('disablePromoCheckbox').addEventListener('change', function () {
-        if (this.checked) {
-          document.getElementById('forcePromoCheckbox').checked = false
-        }
-        updateParams()
-      })
+      document
+        .getElementById('forcePromoCheckbox')
+        .addEventListener('change', function () {
+          if (this.checked) {
+            document.getElementById('disablePromoCheckbox').checked = false
+          }
+          updateParams()
+        })
+      document
+        .getElementById('disablePromoCheckbox')
+        .addEventListener('change', function () {
+          if (this.checked) {
+            document.getElementById('forcePromoCheckbox').checked = false
+          }
+          updateParams()
+        })
       document
         .getElementById('vipLevel')
         .addEventListener('input', updateParams)
