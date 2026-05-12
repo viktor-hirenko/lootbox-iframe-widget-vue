@@ -360,7 +360,9 @@
     })
 
     if (!variantTheme) {
-      console.warn('[Lootbox A/B] Theme "' + variant.theme + '" not found for variant ' + variant.id)
+      console.warn(
+        '[Lootbox A/B] Theme "' + variant.theme + '" not found for variant ' + variant.id
+      )
       return null
     }
 
@@ -393,9 +395,7 @@
       logic: theme.logic || {},
       fontSizes: theme.fontSizes || null,
       images: imagesMap,
-      abTest: abResult
-        ? { testId: abResult.testId, variantId: abResult.variantId }
-        : null,
+      abTest: abResult ? { testId: abResult.testId, variantId: abResult.variantId } : null,
     }
 
     // Застосовуємо CSS клас для відключення анімацій якщо лутбокс неактивний
