@@ -470,6 +470,162 @@ var projectDefaults = {
 }
 ```
 
+## 📋 Сезонне промо (KingWheel)
+
+Тема `KingWheel` має два візуальні стани — **класика** і **літнє промо**. Перемикання повністю автоматичне: у вказаний період `bootstrap.js` підмінює зображення та CSS-атрибут, Vue вмикає додаткові оверлеї (наприклад, анімовану овечку в момент виграшу). Жодних змін на батьківському сайті чи редеплою не потрібно — досить редагувати `promoPeriod` у `config.ts`.
+
+> **Чому хардкод саме `KingWheel`?** Промо запитувалось точково під цю тему. Якщо знадобиться універсальне промо для інших тем — узагальнити через прапорець у `config.ts` (наприклад, `promo.enabled`) + власний `data-attribute` та partial-стиль.
+
+### Період активності — `promoPeriod`
+
+```typescript
+// src/themes/KingWheel/config.ts
+export const config: ThemeConfig = {
+  name: 'KingWheel',
+  // ...
+  promoPeriod: {
+    start: '2026-05-15T10:00:00+03:00',
+    end: '2026-05-29T18:00:00+03:00',
+  },
+}
+```
+
+Поле опціональне; формат — ISO-рядок з тайм-зоною. Валідацію виконує `vite-plugin-themes.ts` (`assertThemeConfig`): якщо `start`/`end` не парсяться як дата — збірка падає з помилкою.
+
+### QA-override через URL
+
+| Параметр | Поведінка |
+|----------|-----------|
+| `?promo=force` | Промо завжди увімкнено, незалежно від дати |
+| `?promo=disable` | Промо завжди вимкнено, навіть всередині `promoPeriod` |
+| (відсутній) | Працює дата з `promoPeriod` |
+
+Інші значення ігноруються. Логіка: `bootstrap.js → isPromoActive()`.
+
+### Як працює перемикання на старті
+
+`bootstrap.js` під час ініціалізації iframe:
+
+1. Рахує `isPromoActive` (URL-override → `promoPeriod` → `false`).
+2. У `true`-режимі ставить `<html data-king-promo="active">` → активуються стилі з `src/themes/KingWheel/styles/_promo.scss`.
+3. Прокидає прапорець у `window.currentTheme.isPromoActive` → доступно у Vue (`App.vue`).
+4. Підмінює мапу зображень (див. наступний пункт), щоб у Vue-шаблонах не було розгалуження.
+
+### Конвенція іменування ассетів: `promo-X` → `X`
+
+У промо-режимі `bootstrap.js → buildImageMap` робить **автоматичну підміну**: будь-який файл `promo-<name>.<ext>` записується під ключем `<name>`, а Vue звертається до зображення тільки за коротким ключем.
+
+```
+images/center.webp        →  themeImages.center        (поза промо)
+images/promo-center.webp  →  themeImages.center        (у промо)
+```
+
+То ж щоб додати промо-варіант існуючого зображення, **достатньо** покласти файл `promo-<original-name>.<ext>` у `src/themes/KingWheel/images/`. Vue-шаблони редагувати не треба.
+
+### Promo-only ассети (без класичного аналога)
+
+Якщо асет існує **тільки** у промо (наприклад, анімація овечки), він залишається доступним **під повним ключем** `promo-<name>` — без підміни. Цей whitelist захардкоджений у `bootstrap.js → buildImageMap`:
+
+```js
+if (key.startsWith('promo-') && key !== 'promo-center-anim') {
+  // підміна на короткий ключ
+}
+```
+
+У шаблоні `App.vue` такий асет береться явно під повним ім'ям:
+
+```vue
+<img :src="themeImages['promo-center-anim']" ... />
+```
+
+**Якщо додаєте новий promo-only ассет:**
+
+- [ ] Додати ім'я у виняток `buildImageMap` (інакше зʼявиться зайвий ключ типу `center-anim`)
+- [ ] У шаблоні використовувати `themeImages['promo-<name>']` (повне ім'я з префіксом)
+- [ ] Обернути у `v-if="isPromoActive && ..."` — щоб поза промо взагалі не рендерилось
+
+### Відкладене завантаження важких асетів
+
+Деякі асети не потрібні на старті — лише після виграшу. Їх винесено з критичного прелоаду в `bootstrap.js`, щоб не блокувати перший рендер колеса:
+
+```js
+// public/js/bootstrap.js
+const DEFERRED_IMAGE_KEYS = new Set(['winanimation', 'promo-center-anim'])
+```
+
+Вони підвантажуються **у фоні з `App.vue → onMounted`** вже після появи колеса:
+
+| Асет | Як підвантажується | Мета |
+|------|--------------------|------|
+| `winanimation` | `useWinAnimationPreloader` — Blob URL, потрібен щоб `@keyframes` у SVG перезапускались на кожному виграші | Кешований blob + унікальний URL |
+| `promo-center-anim` | `new Image()` з `fetchPriority: 'low'` — звичайний warm-up HTTP-кешу | Animated WebP до win-стану вже в кеші |
+
+**Якщо додаєте ще один важкий промо-асет:** додайте його ключ у `DEFERRED_IMAGE_KEYS` і пропишіть warm-up в `App.vue → onMounted`, симетрично з овечкою.
+
+### Vue-сторона: оверлей у момент виграшу
+
+Промо може показувати додатковий шар поверх центру колеса лише у `showWinAnimation`-стані:
+
+```vue
+<!-- src/App.vue -->
+<img
+  v-if="isPromoActive && showWinAnimation"
+  :src="themeImages['promo-center-anim']"
+  class="wheel-center-sheep"
+  alt=""
+  @load="isSheepReady = true"
+/>
+```
+
+`isPromoActive` приходить з `window.currentTheme.isPromoActive`; `showWinAnimation` керується анімацією колеса.
+
+### Анти-блік патерн (важливо!)
+
+**Контекст:** статичний центр колеса (`.wheel-center`) — окреме зображення `promo-center.webp`, яке у промо теж анімоване (підморгування). Поверх нього при виграші зʼявляється `<img class="wheel-center-sheep">` з animated WebP. Якщо просто сховати статику синхронно з появою оверлею (`v-if` створює `<img>` → CSS `:has()` ховає статику), браузер ще не встиг декодувати перший кадр animated WebP — на 1–2 кадри видно **порожнечу** (блік).
+
+**Рішення:** статика ховається лише після того, як `<img>` оверлею викликав `@load`. Це гарантує, що перший кадр анімації вже відмальовано в момент приховання статики.
+
+```typescript
+// src/App.vue (спрощено)
+const isSheepReady = ref(false)
+
+watch(showWinAnimation, show => {
+  if (show) isSheepReady.value = false   // скидаємо для повторних спінів
+})
+```
+
+```vue
+<!-- Статика ховається тільки коли overlay GOTовий до показу -->
+<img
+  :src="themeImages.center"
+  class="wheel-center"
+  :class="{ 'wheel-center--hidden': isPromoActive && showWinAnimation && isSheepReady }"
+/>
+```
+
+**Якщо додаєте ще один promo-only animated overlay:**
+
+- [ ] Не скривайте підлеглий шар одразу за `v-if` — чекайте на `@load`
+- [ ] Скидайте `isReady`-флаг при початку нового win-стану (інакше при повторному спіні шар приховається ще до завантаження)
+
+### CSS-конвенція
+
+- Всі промо-стилі живуть у `src/themes/KingWheel/styles/_promo.scss` під селектором `:root[data-king-promo='active']` — поза промо вони не застосовуються.
+- Модифікатор `.wheel-center--hidden` визначений саме там (тільки `visibility: hidden`, без `display: none` — щоб не зʼїдати місце і не ламати layout).
+- Класи `.wheel-center` (з `theme.scss`) і `.wheel-center-sheep` (з `_promo.scss`) мають збігатися за **шириною та `top`-позицією**, інакше overlay буде на пару відсотків вужчим за статику і виглядатиме як зменшений диск.
+
+### Чеклист: тестування промо локально
+
+- [ ] `npm run dev`
+- [ ] Відкрити `test-king-lootbox.html`, обрати **KingWheel**, увімкнути **force promo** чекбоксом (це додає `?promo=force` до iframe)
+- [ ] Зробити спін → переконатися, що:
+  - овечка зʼявляється на win-стані без бліку,
+  - статичний центр прихований рівно під оверлеєм,
+  - після зникнення win-frame статичний центр повертається,
+  - повторний спін працює так само (без «миттєвого» приховання статики до завантаження)
+- [ ] Перевірити Network: `promo-center-anim.webp` НЕ повинен бути у критичному прелоаді (грузиться у фоні з low priority після `onMounted`)
+- [ ] Перевірити на iOS Safari — артефактів масштабування не повинно бути (саме тому ассет використовується як прямий `<img src="…webp">`, а не загорнутим у SVG)
+
 ## 📋 Конфігурація через URL
 
 ### Підтримувані параметри
@@ -485,6 +641,7 @@ var projectDefaults = {
 - **`vip_level`** - VIP рівень гравця (число від 0 до максимального рівня на проекті, за замовчуванням 0)
 - **`fs_org`** - FullStory Org ID для відстеження взаємодій в iframe (string, опціонально)
 - **`user_id`** - ID користувача для передачі в Google Analytics (string, опціонально)
+- **`promo`** - QA-override сезонного промо KingWheel: `force` / `disable` (інші значення ігноруються). Деталі — у розділі «Сезонне промо (KingWheel)»
 
 > **Примітка:** Параметр `vip_level` зарезервований для майбутнього використання. Наразі він не впливає на відображення колеса, але в майбутніх версіях може використовуватись для кастомізації дизайну залежно від VIP статусу гравця.
 

@@ -94,7 +94,12 @@
     </div>
     <img :src="themeImages.pointerShadow" class="wheel-pointer-shadow" alt="" />
     <img :src="themeImages.wheelpointer" class="wheel-pointer" alt="" />
-    <img :src="themeImages.center" class="wheel-center" alt="" />
+    <img
+      :src="themeImages.center"
+      class="wheel-center"
+      :class="{ 'wheel-center--hidden': isPromoActive && showWinAnimation && isSheepReady }"
+      alt=""
+    />
     <!--
       Літнє промо KingWheel: анімація овечки поверх центру колеса лише під час win-стану.
       Прив'язано до showWinAnimation, тому зникає одночасно з win-frame/winanimation
@@ -106,6 +111,7 @@
       :src="themeImages['promo-center-anim']"
       class="wheel-center-sheep"
       alt=""
+      @load="isSheepReady = true"
     />
     <div class="center-frame">
       <img
@@ -221,6 +227,12 @@ const motionBlurOpacity = ref<number>(0)
 const maskOpacity = ref<number>(0)
 const winAnimationOpacity = ref<number>(1)
 const animationId = ref<number | null>(null)
+
+// Готовність промо-овечки до показу: true тільки після @load <img> анімації.
+// Поки false — статичну овечку (.wheel-center) НЕ ховаємо, інакше між
+// створенням <img> і відмалюванням першого кадру animated WebP виникає
+// порожній кадр (блік). Скидається разом із showWinAnimation.
+const isSheepReady = ref<boolean>(false)
 
 // URL для win-анімації (створюється через Blob URL для перезапуску @keyframes)
 const winAnimationSrc = ref<string>('')
@@ -394,10 +406,14 @@ const {
   revokeUrl: revokeWinAnimationUrl,
 } = useWinAnimationPreloader(themeImages.winanimation)
 
-// Створюємо Blob URL при показі win-анімації, звільняємо при приховуванні
+// Створюємо Blob URL при показі win-анімації, звільняємо при приховуванні.
+// Також скидаємо isSheepReady на старті win-стану — щоб при повторному
+// спіні статична овечка не ховалася до того, як animated WebP знов
+// відмалює перший кадр (інакше повернеться блік між кадрами).
 watch(showWinAnimation, show => {
   if (show) {
     winAnimationSrc.value = createWinAnimationUrl()
+    isSheepReady.value = false
   } else if (winAnimationSrc.value) {
     revokeWinAnimationUrl(winAnimationSrc.value)
     winAnimationSrc.value = ''
