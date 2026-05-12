@@ -452,6 +452,18 @@ onMounted(async () => {
   // Не блокує UI — завантаження йде паралельно
   // Спін триває 14 секунд — SVG точно встигне завантажитись
   preloadWinAnimation()
+
+  // Warm-up HTTP-кешу для овечки (animated WebP, ~380 KB).
+  // Виключена з критичного прелоаду в bootstrap.js (DEFERRED_IMAGE_KEYS),
+  // бо потрібна лише в момент перемоги в промо-режимі. Тут тихо «прогріваємо»
+  // кеш браузера у фоні з низьким пріоритетом — коли спрацює v-if на
+  // .wheel-center-sheep, <img> візьме файл уже з кешу без мережевого запиту.
+  if (isPromoActive && themeImages['promo-center-anim']) {
+    const sheepImg = new Image()
+    sheepImg.decoding = 'async'
+    sheepImg.fetchPriority = 'low'
+    sheepImg.src = themeImages['promo-center-anim']
+  }
 })
 
 onUnmounted(() => {

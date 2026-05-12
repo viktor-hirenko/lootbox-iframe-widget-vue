@@ -219,16 +219,22 @@
   /**
    * Список зображень для критичного прелоаду (запобігає FOUC).
    *
-   * winanimation завжди виключаємо — вона важка і завантажується у фоні
-   * вже після появи колеса (див. useWinAnimationPreloader.ts).
+   * Виключаємо з критичного прелоаду «важкі та відкладені» асети — вони
+   * потрібні лише після перемоги, тому їх вантажимо у фоні з App.vue вже
+   * після появи колеса:
+   *   - winanimation       → useWinAnimationPreloader (Blob URL для @keyframes)
+   *   - promo-center-anim  → warm-up HTTP-кешу через new Image() (animated WebP,
+   *                          ~380 KB, потрібен тільки в промо у win-стані)
    *
    * Поза промо: викидаємо ВСІ promo-* (зайвий трафік на ~500 KB).
    * У промо: тягнемо тільки promo-* + ті класичні, у яких немає promo-аналога,
    * щоб не качати парами одне і те саме (наприклад, center.webp і
-   * promo-center.webp — у промо потрібен лише другий).
+   * promo-center.webp — у промо потрібен лише promo-center.webp).
    */
+  const DEFERRED_IMAGE_KEYS = new Set(['winanimation', 'promo-center-anim'])
+
   function pickPreloadImages(imageUrls, isPromo) {
-    let urls = (imageUrls || []).filter(u => !u.includes('winanimation'))
+    let urls = (imageUrls || []).filter(u => !DEFERRED_IMAGE_KEYS.has(imageKeyFromUrl(u)))
     if (!isPromo) {
       return urls.filter(u => {
         const k = imageKeyFromUrl(u)
